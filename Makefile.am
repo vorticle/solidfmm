@@ -1,0 +1,6 @@
+ACLOCAL_AMFLAGS = -I m4
+SUBDIRS=solidfmm tests
+
+EXTRA_DIST = HOWTO
+
+

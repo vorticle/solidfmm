@@ -1,0 +1,41 @@
+noinst_PROGRAMS = test_swap_matrix test_rotation test_swap \
+                  test_m2l test_m2m test_l2l \
+                  benchmark_m2l benchmark_m2l_naive benchmark_m2m benchmark_l2l \
+                  benchmark_microkernel benchmark_avx
+
+test_swap_matrix_SOURCES = test_swap_matrix.cpp
+test_swap_matrix_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+test_rotation_SOURCES = test_rotation.cpp
+test_rotation_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+test_swap_SOURCES = test_swap.cpp
+test_swap_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+test_m2l_SOURCES = test_m2l.cpp
+test_m2l_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+test_m2m_SOURCES = test_m2m.cpp
+test_m2m_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+test_l2l_SOURCES = test_l2l.cpp
+test_l2l_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+benchmark_microkernel_SOURCES = benchmark_microkernel.cpp
+benchmark_microkernel_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+benchmark_avx_SOURCES = benchmark_avx.cpp
+benchmark_avx_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+benchmark_m2l_SOURCES = benchmark_m2l.cpp
+benchmark_m2l_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+benchmark_m2l_naive_SOURCES = benchmark_m2l_naive.cpp
+benchmark_m2l_naive_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+benchmark_m2m_SOURCES = benchmark_m2m.cpp
+benchmark_m2m_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+
+benchmark_l2l_SOURCES = benchmark_l2l.cpp
+benchmark_l2l_LDADD   = $(top_builddir)/solidfmm/libsolidfmm.la
+

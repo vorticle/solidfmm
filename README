@@ -1,0 +1,129 @@
+
+                    solidfmm – Wir ziehen alle Register!
+
+                                   README
+
+================================================================================
+
+Summary.
+
+================================================================================
+
+solidfmm is a highly optimised C++ library for operations on the solid
+harmonics as they are needed in fast multipole methods.
+
+Installation instructions can be found in the file INSTALL. Usage examples
+and a description of the API can be found in the file HOWTO.
+
+LIST OF FEATURES:
+
+    - Supports both single and double precision.
+    - Fully vectorised on x86 CPUs with AVX or AVX2 support.
+    - Hand-written assembly implementations for maximal performance of critical
+      parts.
+    - Supports mixed order translations: you can do M2M, M2L, L2L with
+      differing input and output orders P. This is important for adaptive fast
+      multipole codes.
+    - No dependence on external libraries except for the C++ standard library.
+    - Thread safe. In fact, solidfmm is specifically designed to be used in a
+      multithreaded environment.
+    - Exception safe. All routines either provide the nothrow or the strong
+      exception safety guarantee. Either a routine succeeds or it leaves its
+      arguments unchanged.
+    - Lean. The library interface is very small and easy to use. We used
+      encapsulation using handles to avoid dependence of user code on
+      implementation details.
+    - 100% free of spam. This is a properly designed library. It does not spam
+      diagnostics to std::cout. In fact, I/O facilities are not needed at all to
+      use solidfmm. It does not pollute the global namespace either.
+
+The assembly implementations assume that either GCC's (GNU Compiler Collection)
+or LLVM's (clang) C++ compiler is used. 
+
+
+================================================================================
+
+Motivation.
+
+================================================================================
+
+In fast multipole methods, the solid harmonics are used to expand the
+fundamental solution of the Laplace operator in three-dimensional space. The
+details of the fast multipole methods can be found in many references in the
+literature. Tremendous amounts of work have been spent on parallelising this
+algorithm to large-scale clusters and supercomputers.
+
+The fast multipole revolves around certain translation operators,
+namely M2M, M2L, and L2L. Basically, these operations correspond to
+four-fold nested loops of complexity O(P⁴), where P is the order of the
+expansions used. In the aforementioned highly parallelised implementaions,
+these translation operators get called millions of times in parallel.
+But even though these operators are the bread-and-butter of the fast
+multipole method, most implentations simply use their naïve implementation
+as a four-fold nested loop, which is quite inefficient.
+
+solidfmm aims to change this situation. It provides highly optimised
+implementations of these operators and uses the accelerated, rotation-based
+O(P³) implementation. For x86 CPUs supporting the AVX or AVX2 instruction sets
+it provides maximally tuned implementations, which are partially hand-coded in
+assembly language for maximum performance. For all other architectures we
+provide a generic implementation, which is, however, much slower. If you are
+interested in the gritty details of the implementation, we refer to the future
+documentation and the paper, which are currently in preparation.
+
+IMPORTANT:
+If you need support for other common CPUs, please do not hesitate to contact me:
+if you provide me access to your favourite CPU, I am willing to provide
+optimised implementations for it as well. The only reason why I do not support
+other CPUs yet, is that I do not have any other machine available at the moment.
+
+The slogan is a German figure of speach; it literally translates to ‘We draw
+all registers!’, where ‘register’ originally refers to a set of pipes of an
+organ (the musical instrument). It means that one uses all available means to
+achieve a goal. solidfmm does this in a quite literal sense, by using all of a
+CPUs floating point registers to attain maximum performance.
+
+
+================================================================================
+
+Acknowledgements.
+
+================================================================================
+
+This work was created at the Institute for Applied and Computational Mechanics
+(ACOM) at RWTH Aachen University, Germany. I would like to express gratitude to
+my boss, who is very supportive.
+
+This research was carried out under funding of the German Research Foundation
+(DFG), project “Vortex Methods for Incompressible Flows”, number 432219818.
+Without their support, this project would not have been possible.
+
+I also received funding from the German National High Performance Computing
+(NHR) organisation. 
+
+I would also like to acknowledge the work of Simon Paepenmöller, one of my
+student workers. He helped in the development of prelimanary software designs,
+and the tracking of many nasty sign bugs. This work is completely new, but
+draws from conclusions from these initial attempts and would not have been
+possible without them.
+
+Finally, I should mention that this software has been written using the best
+IDE in the world: vim. 
+
+================================================================================
+
+Licence and Copyright.
+
+================================================================================
+
+I, Matthias Kirchhart, am the sole author of this software and its sole copyright
+holder. You may use it under the terms and conditions of the GNU General Public
+License as published by the Free Software Foundation; either version 3 or
+(at your option) any later version. A copy of version 3 can be found in the file
+COPYING.
+
+If you want to use this software in a commercial product, please contact me for
+other licence options. I *will* defend my copyright against companies who steal 
+my work and incorporate it in closed-source, commercial products without my
+permission.
+
