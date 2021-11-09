@@ -1,2 +1,12 @@
 October 29th, 2021: Initial Release of solidfmm.
 
+
+
+November 9th, 2021: solidfmm-1.1.
+
+Added support for AVX-512. Double precision versions of both AVX and AVX-512
+now use a different algorithms for reading solids into the thread local buffers
+and back. In effect, the necessary matrix transposition is done in a vectorised
+fashion in the processor registers now. At P = 20 this trick gives about
+15-20% increase in performance.
+

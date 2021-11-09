@@ -69,11 +69,11 @@ public:
                                        real *real_out, real *imag_out,
                                  size_t n, size_t Pmax ) const noexcept = 0;
 
-    virtual void solid2buf( const real *const *solids, const size_t *P,
+    virtual void solid2buf( const real *const *solids, const real *const zeros, const size_t *P,
                             real *real_out, real *imag_out, size_t n ) const noexcept = 0;
 
     virtual void buf2solid( const real *real_in, const real *imag_in, 
-                            real **solids, const size_t *P, size_t n ) const noexcept = 0;
+                            real **solids, real *trash, const size_t *P, size_t n ) const noexcept = 0;
 };
 
 extern template class microkernel<float >;

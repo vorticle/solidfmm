@@ -323,45 +323,45 @@ void trans2swap_buf_impl( const real *const *const real_in,
 }
 
 template <typename real, size_t cols>
-void solid2buf_impl( const real *const *solids, const size_t *P,
+void solid2buf_impl( const real *const *p_solids, const real *const zeros, const size_t *P,
                      real *real_out, real *imag_out, size_t n ) noexcept
 {
+    const real* solids[ cols ];
     for ( size_t l = 0; l < cols; ++l )
     {
         if ( n < P[l] )
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                real_out[ m*cols + l ] = solids[l][ (n  )*(n+1) + m ];
-                imag_out[ m*cols + l ] = solids[l][ (n+1)*(n+1) + m ];
-            }
-        }
+            solids[ l ] = const_cast<real*>(p_solids[l]);
         else
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                real_out[ m*cols + l ] = 0;
-                imag_out[ m*cols + l ] = 0;
-            }
-        }
+            solids[ l ] = const_cast<real*>(zeros);
+    }
+
+    for ( size_t l = 0; l < cols; ++l )
+    for ( size_t m = 0; m <= n; ++m )
+    {
+        real_out[ m*cols + l ] = solids[l][ (n  )*(n+1) + m ];
+        imag_out[ m*cols + l ] = solids[l][ (n+1)*(n+1) + m ];
     }
 }
 
 template <typename real, size_t cols>
 void buf2solid_impl( const real *real_in, const real *imag_in, 
-                     real **solids, const size_t *P, size_t n ) noexcept
+                     real **p_solids, real *trash, const size_t *P, size_t n ) noexcept
 {
+    real* solids[ cols ];
     for ( size_t l = 0; l < cols; ++l )
     {
         if ( n < P[l] )
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                solids[l][ (n  )*(n+1) + m ] += real_in[ m*cols + l ];
-                solids[l][ (n+1)*(n+1) + m ] += imag_in[ m*cols + l ];
-            } 
-        }
+            solids[ l ] = p_solids[l];
+        else
+            solids[ l ] = trash;
     }
+
+    for ( size_t l = 0; l < cols; ++l )
+    for ( size_t m = 0; m <= n; ++m )
+    {
+        solids[l][ (n  )*(n+1) + m ] += real_in[ m*cols + l ];
+        solids[l][ (n+1)*(n+1) + m ] += imag_in[ m*cols + l ];
+    } 
 }
 
 }
@@ -428,17 +428,17 @@ trans2swap_buf( const float *const *const real_in,
 }
 
 void microkernel_float_generic::
-solid2buf( const float *const *solids, const size_t *P,
+solid2buf( const float *const *solids, const float *const zeros, const size_t *P,
                  float *real_out, float *imag_out, size_t n ) const noexcept
 {
-    solid2buf_impl<float,8>(solids,P,real_out,imag_out,n);
+    solid2buf_impl<float,8>(solids,zeros,P,real_out,imag_out,n);
 }
 
 void microkernel_float_generic::
 buf2solid( const float *real_in, const float *imag_in, 
-           float **solids, const size_t *P, size_t n ) const noexcept
+           float **solids, float *trash, const size_t *P, size_t n ) const noexcept
 {
-    buf2solid_impl<float,8>(real_in,imag_in,solids,P,n);
+    buf2solid_impl<float,8>(real_in,imag_in,solids,trash,P,n);
 }
 
 void microkernel_double_generic::
@@ -502,17 +502,17 @@ trans2swap_buf( const double *const *const real_in,
 }
 
 void microkernel_double_generic::
-solid2buf( const double *const *solids, const size_t *P,
+solid2buf( const double *const *solids, const double *const zeros, const size_t *P,
                  double *real_out, double *imag_out, size_t n ) const noexcept
 {
-    solid2buf_impl<double,4>(solids,P,real_out,imag_out,n);
+    solid2buf_impl<double,4>(solids,zeros,P,real_out,imag_out,n);
 }
 
 void microkernel_double_generic::
 buf2solid( const double *real_in, const double *imag_in, 
-           double **solids, const size_t *P, size_t n ) const noexcept
+           double **solids, double *trash, const size_t *P, size_t n ) const noexcept
 {
-    buf2solid_impl<double,4>(real_in,imag_in,solids,P,n);
+    buf2solid_impl<double,4>(real_in,imag_in,solids,trash,P,n);
 }
 
 }

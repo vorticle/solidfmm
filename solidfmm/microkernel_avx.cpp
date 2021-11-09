@@ -641,43 +641,65 @@ trans2swap_buf( const float *const *const real_in,
 
 void microkernel_float_avx::
 buf2solid( const float   *real_in, const float *imag_in, 
-                 float  **solids,  const size_t *P, size_t n ) const noexcept
+                 float  **p_solids,  float *trash, const size_t *P, size_t n ) const noexcept
 {
-    for ( size_t l = 0; l < 16; ++l )
+    float *solids[ 16 ] =
     {
-        if ( n < P[l] )
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                solids[l][ (n  )*(n+1) + m ] += real_in[ m*16 + l ];
-                solids[l][ (n+1)*(n+1) + m ] += imag_in[ m*16 + l ];
-            } 
-        }
-    }
+        ( n < P[ 0] ) ? p_solids[ 0] : trash,
+        ( n < P[ 1] ) ? p_solids[ 1] : trash,
+        ( n < P[ 2] ) ? p_solids[ 2] : trash,
+        ( n < P[ 3] ) ? p_solids[ 3] : trash,
+        ( n < P[ 4] ) ? p_solids[ 4] : trash,
+        ( n < P[ 5] ) ? p_solids[ 5] : trash,
+        ( n < P[ 6] ) ? p_solids[ 6] : trash,
+        ( n < P[ 7] ) ? p_solids[ 7] : trash,
+        ( n < P[ 8] ) ? p_solids[ 8] : trash,
+        ( n < P[ 9] ) ? p_solids[ 9] : trash,
+        ( n < P[10] ) ? p_solids[10] : trash,
+        ( n < P[11] ) ? p_solids[11] : trash,
+        ( n < P[12] ) ? p_solids[12] : trash,
+        ( n < P[13] ) ? p_solids[13] : trash,
+        ( n < P[14] ) ? p_solids[14] : trash,
+        ( n < P[15] ) ? p_solids[15] : trash
+    };
+
+    for ( size_t l = 0; l < 16; ++l )
+    for ( size_t m = 0; m <= n; ++m )
+    {
+        solids[l][ (n  )*(n+1) + m ] += real_in[ m*16 + l ];
+        solids[l][ (n+1)*(n+1) + m ] += imag_in[ m*16 + l ];
+    } 
 }
 
 void microkernel_float_avx::
-solid2buf( const float *const *solids, const size_t *P,
+solid2buf( const float *const *p_solids, const float *const zeros, const size_t *P,
                  float *real_out, float *imag_out, size_t n ) const noexcept
 {
-    for ( size_t l = 0; l < 16; ++l )
+    const float *const solids[ 16 ] =
     {
-        if ( n < P[l] )
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                real_out[ m*16 + l ] = solids[l][ (n  )*(n+1) + m ];
-                imag_out[ m*16 + l ] = solids[l][ (n+1)*(n+1) + m ];
-            }
-        }
-        else
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                real_out[ m*16 + l ] = 0;
-                imag_out[ m*16 + l ] = 0;
-            }
-        }
+        ( n < P[ 0] ) ? p_solids[ 0] : zeros,
+        ( n < P[ 1] ) ? p_solids[ 1] : zeros,
+        ( n < P[ 2] ) ? p_solids[ 2] : zeros,
+        ( n < P[ 3] ) ? p_solids[ 3] : zeros,
+        ( n < P[ 4] ) ? p_solids[ 4] : zeros,
+        ( n < P[ 5] ) ? p_solids[ 5] : zeros,
+        ( n < P[ 6] ) ? p_solids[ 6] : zeros,
+        ( n < P[ 7] ) ? p_solids[ 7] : zeros,
+        ( n < P[ 8] ) ? p_solids[ 8] : zeros,
+        ( n < P[ 9] ) ? p_solids[ 9] : zeros,
+        ( n < P[10] ) ? p_solids[10] : zeros,
+        ( n < P[11] ) ? p_solids[11] : zeros,
+        ( n < P[12] ) ? p_solids[12] : zeros,
+        ( n < P[13] ) ? p_solids[13] : zeros,
+        ( n < P[14] ) ? p_solids[14] : zeros,
+        ( n < P[15] ) ? p_solids[15] : zeros
+    };
+
+    for ( size_t l = 0; l < 16; ++l )
+    for ( size_t m = 0; m <= n; ++m )
+    {
+        real_out[ m*16 + l ] = solids[l][ (n  )*(n+1) + m ];
+        imag_out[ m*16 + l ] = solids[l][ (n+1)*(n+1) + m ];
     }
 }
 
@@ -1288,47 +1310,174 @@ trans2swap_buf( const double *const *const real_in,
     }
 }
 
-void microkernel_double_avx::
-buf2solid( const double   *real_in, const double *imag_in, 
-                 double  **solids,  const size_t *P, size_t n ) const noexcept
-{
-    for ( size_t l = 0; l < 8; ++l )
-    {
-        if ( n < P[l] )
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                solids[l][ (n  )*(n+1) + m ] += real_in[ m*8 + l ];
-                solids[l][ (n+1)*(n+1) + m ] += imag_in[ m*8 + l ];
-            } 
-        }
-    }
+#define transpose(row0,row1,row2,row3)               \
+{                                                    \
+    __m256d tmp3, tmp2, tmp1, tmp0;                  \
+                                                     \
+    tmp0 = _mm256_unpacklo_pd((row0),(row1));        \
+    tmp2 = _mm256_unpackhi_pd((row0),(row1));        \
+    tmp1 = _mm256_unpacklo_pd((row2),(row3));        \
+    tmp3 = _mm256_unpackhi_pd((row2),(row3));        \
+                                                     \
+    (row0) = _mm256_permute2f128_pd(tmp0,tmp1,0x20); \
+    (row1) = _mm256_permute2f128_pd(tmp2,tmp3,0x20); \
+    (row2) = _mm256_permute2f128_pd(tmp0,tmp1,0x31); \
+    (row3) = _mm256_permute2f128_pd(tmp2,tmp3,0x31); \
 }
 
 void microkernel_double_avx::
-solid2buf( const double *const *solids, const size_t *P,
+buf2solid( const double  *real_in,  const double *imag_in, 
+                 double **p_solids,       double *trash, const size_t *P, size_t n ) const noexcept
+{
+    double *solids[ 8 ] =
+    {
+        ( n < P[0] ) ? p_solids[0] : trash,
+        ( n < P[1] ) ? p_solids[1] : trash,
+        ( n < P[2] ) ? p_solids[2] : trash,
+        ( n < P[3] ) ? p_solids[3] : trash,
+        ( n < P[4] ) ? p_solids[4] : trash,
+        ( n < P[5] ) ? p_solids[5] : trash,
+        ( n < P[6] ) ? p_solids[6] : trash,
+        ( n < P[7] ) ? p_solids[7] : trash
+    };
+
+    size_t m;
+    __m256d r00, r01, r10, r11, r20, r21, r30, r31;
+    for ( m = 0; m + 3 <= n; m += 4 )
+    {
+        r00 = _mm256_load_pd( real_in + (m+0)*8 + 0 );
+        r01 = _mm256_load_pd( real_in + (m+0)*8 + 4 );
+        r10 = _mm256_load_pd( real_in + (m+1)*8 + 0 );
+        r11 = _mm256_load_pd( real_in + (m+1)*8 + 4 );
+        r20 = _mm256_load_pd( real_in + (m+2)*8 + 0 );
+        r21 = _mm256_load_pd( real_in + (m+2)*8 + 4 );
+        r30 = _mm256_load_pd( real_in + (m+3)*8 + 0 );
+        r31 = _mm256_load_pd( real_in + (m+3)*8 + 4 );
+        transpose(r00,r10,r20,r30);
+        transpose(r01,r11,r21,r31);
+        r00 = _mm256_add_pd( r00, _mm256_loadu_pd( solids[0] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[0] + (n  )*(n+1) + m, r00 );
+        r10 = _mm256_add_pd( r10, _mm256_loadu_pd( solids[1] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[1] + (n  )*(n+1) + m, r10 );
+        r20 = _mm256_add_pd( r20, _mm256_loadu_pd( solids[2] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[2] + (n  )*(n+1) + m, r20 );
+        r30 = _mm256_add_pd( r30, _mm256_loadu_pd( solids[3] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[3] + (n  )*(n+1) + m, r30 );
+        r01 = _mm256_add_pd( r01, _mm256_loadu_pd( solids[4] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[4] + (n  )*(n+1) + m, r01 );
+        r11 = _mm256_add_pd( r11, _mm256_loadu_pd( solids[5] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[5] + (n  )*(n+1) + m, r11 );
+        r21 = _mm256_add_pd( r21, _mm256_loadu_pd( solids[6] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[6] + (n  )*(n+1) + m, r21 );
+        r31 = _mm256_add_pd( r31, _mm256_loadu_pd( solids[7] + (n  )*(n+1) + m ) );
+        _mm256_storeu_pd( solids[7] + (n  )*(n+1) + m, r31 );
+
+        r00 = _mm256_load_pd( imag_in + (m+0)*8 + 0 );
+        r01 = _mm256_load_pd( imag_in + (m+0)*8 + 4 );
+        r10 = _mm256_load_pd( imag_in + (m+1)*8 + 0 );
+        r11 = _mm256_load_pd( imag_in + (m+1)*8 + 4 );
+        r20 = _mm256_load_pd( imag_in + (m+2)*8 + 0 );
+        r21 = _mm256_load_pd( imag_in + (m+2)*8 + 4 );
+        r30 = _mm256_load_pd( imag_in + (m+3)*8 + 0 );
+        r31 = _mm256_load_pd( imag_in + (m+3)*8 + 4 );
+        transpose(r00,r10,r20,r30);
+        transpose(r01,r11,r21,r31);
+        r00 = _mm256_add_pd( r00, _mm256_loadu_pd( solids[0] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[0] + (n+1)*(n+1) + m, r00 );
+        r10 = _mm256_add_pd( r10, _mm256_loadu_pd( solids[1] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[1] + (n+1)*(n+1) + m, r10 );
+        r20 = _mm256_add_pd( r20, _mm256_loadu_pd( solids[2] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[2] + (n+1)*(n+1) + m, r20 );
+        r30 = _mm256_add_pd( r30, _mm256_loadu_pd( solids[3] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[3] + (n+1)*(n+1) + m, r30 );
+        r01 = _mm256_add_pd( r01, _mm256_loadu_pd( solids[4] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[4] + (n+1)*(n+1) + m, r01 );
+        r11 = _mm256_add_pd( r11, _mm256_loadu_pd( solids[5] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[5] + (n+1)*(n+1) + m, r11 );
+        r21 = _mm256_add_pd( r21, _mm256_loadu_pd( solids[6] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[6] + (n+1)*(n+1) + m, r21 );
+        r31 = _mm256_add_pd( r31, _mm256_loadu_pd( solids[7] + (n+1)*(n+1) + m ) );
+        _mm256_storeu_pd( solids[7] + (n+1)*(n+1) + m, r31 );
+    }
+
+    // Copy the remaining parts in scalar mode.
+    for ( size_t l  = 0; l  <  8; ++l  )
+    for ( size_t mm = m; mm <= n; ++mm )
+    {
+        solids[l][ (n  )*(n+1) + mm ] += real_in[ mm*8 + l ];
+        solids[l][ (n+1)*(n+1) + mm ] += imag_in[ mm*8 + l ];
+    } 
+}
+
+void microkernel_double_avx::
+solid2buf( const double *const *p_solids, const double *const zeros, const size_t *P,
                  double *real_out, double *imag_out, size_t n ) const noexcept
 {
-    for ( size_t l = 0; l < 8; ++l )
+    const double *const solids[ 8 ] =
     {
-        if ( n < P[l] )
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                real_out[ m*8 + l ] = solids[l][ (n  )*(n+1) + m ];
-                imag_out[ m*8 + l ] = solids[l][ (n+1)*(n+1) + m ];
-            }
-        }
-        else
-        {
-            for ( size_t m = 0; m <= n; ++m )
-            {
-                real_out[ m*8 + l ] = 0;
-                imag_out[ m*8 + l ] = 0;
-            }
-        }
+        ( n < P[0] ) ? p_solids[0] : zeros,
+        ( n < P[1] ) ? p_solids[1] : zeros,
+        ( n < P[2] ) ? p_solids[2] : zeros,
+        ( n < P[3] ) ? p_solids[3] : zeros,
+        ( n < P[4] ) ? p_solids[4] : zeros,
+        ( n < P[5] ) ? p_solids[5] : zeros,
+        ( n < P[6] ) ? p_solids[6] : zeros,
+        ( n < P[7] ) ? p_solids[7] : zeros
+    };
+
+    size_t m;
+    __m256d r00, r01, r10, r11, r20, r21, r30, r31;
+    for ( m = 0; m + 3 <= n; m += 4 )
+    {
+        r00 = _mm256_loadu_pd( solids[0] + (n  )*(n+1) + m );
+        r10 = _mm256_loadu_pd( solids[1] + (n  )*(n+1) + m );
+        r20 = _mm256_loadu_pd( solids[2] + (n  )*(n+1) + m );
+        r30 = _mm256_loadu_pd( solids[3] + (n  )*(n+1) + m );
+        r01 = _mm256_loadu_pd( solids[4] + (n  )*(n+1) + m );
+        r11 = _mm256_loadu_pd( solids[5] + (n  )*(n+1) + m );
+        r21 = _mm256_loadu_pd( solids[6] + (n  )*(n+1) + m );
+        r31 = _mm256_loadu_pd( solids[7] + (n  )*(n+1) + m );
+        transpose(r00,r10,r20,r30);
+        transpose(r01,r11,r21,r31);
+        _mm256_store_pd( real_out + (m+0)*8 + 0, r00 );
+        _mm256_store_pd( real_out + (m+0)*8 + 4, r01 );
+        _mm256_store_pd( real_out + (m+1)*8 + 0, r10 );
+        _mm256_store_pd( real_out + (m+1)*8 + 4, r11 );
+        _mm256_store_pd( real_out + (m+2)*8 + 0, r20 );
+        _mm256_store_pd( real_out + (m+2)*8 + 4, r21 );
+        _mm256_store_pd( real_out + (m+3)*8 + 0, r30 );
+        _mm256_store_pd( real_out + (m+3)*8 + 4, r31 );
+
+        r00 = _mm256_loadu_pd( solids[0] + (n+1)*(n+1) + m );
+        r10 = _mm256_loadu_pd( solids[1] + (n+1)*(n+1) + m );
+        r20 = _mm256_loadu_pd( solids[2] + (n+1)*(n+1) + m );
+        r30 = _mm256_loadu_pd( solids[3] + (n+1)*(n+1) + m );
+        r01 = _mm256_loadu_pd( solids[4] + (n+1)*(n+1) + m );
+        r11 = _mm256_loadu_pd( solids[5] + (n+1)*(n+1) + m );
+        r21 = _mm256_loadu_pd( solids[6] + (n+1)*(n+1) + m );
+        r31 = _mm256_loadu_pd( solids[7] + (n+1)*(n+1) + m );
+        transpose(r00,r10,r20,r30);
+        transpose(r01,r11,r21,r31);
+        _mm256_store_pd( imag_out + (m+0)*8 + 0, r00 );
+        _mm256_store_pd( imag_out + (m+0)*8 + 4, r01 );
+        _mm256_store_pd( imag_out + (m+1)*8 + 0, r10 );
+        _mm256_store_pd( imag_out + (m+1)*8 + 4, r11 );
+        _mm256_store_pd( imag_out + (m+2)*8 + 0, r20 );
+        _mm256_store_pd( imag_out + (m+2)*8 + 4, r21 );
+        _mm256_store_pd( imag_out + (m+3)*8 + 0, r30 );
+        _mm256_store_pd( imag_out + (m+3)*8 + 4, r31 );
+    }
+
+    // Remaining part in scalar mode.
+    for ( size_t l  = 0; l  <  8; ++l  )
+    for ( size_t mm = m; mm <= n; ++mm )
+    {
+        real_out[ mm*8 + l ] = solids[l][ (n  )*(n+1) + mm ];
+        imag_out[ mm*8 + l ] = solids[l][ (n+1)*(n+1) + mm ];
     }
 }
+
+#undef transpose
 
 }
 

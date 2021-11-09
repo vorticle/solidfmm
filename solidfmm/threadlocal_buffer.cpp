@@ -38,6 +38,7 @@ ptr_buf        { nullptr },
 r              { nullptr }, rinv           { nullptr },
 cos_alpha      { nullptr }, sin_alpha      { nullptr },
 cos_beta       { nullptr }, sin_beta       { nullptr },
+zeros          { nullptr }, trash          { nullptr },
  swap_real_in  { nullptr },  swap_imag_in  { nullptr },
  swap_real_out { nullptr },  swap_imag_out { nullptr },
 trans_real_in  { nullptr }, trans_imag_in  { nullptr },
@@ -82,6 +83,9 @@ threadlocal_buffer<real>::threadlocal_buffer( const operator_data<real> &op ):
         bufsize += 4*padded_rows*cols;
     }
 
+    // Trash and zeros.
+    bufsize += 2*P*(P+1);
+
     // Does the actual allocation.
     void *mem = std::aligned_alloc( alignment, bufsize * sizeof(real) );
     if ( mem == nullptr ) throw std::bad_alloc {};
@@ -115,6 +119,9 @@ threadlocal_buffer<real>::threadlocal_buffer( const operator_data<real> &op ):
         trans_imag_out[m] = tmp; tmp = tmp + padded_rows*cols;
     } 
 
+    zeros = tmp; tmp = tmp + P*(P+1);
+    trash = tmp; tmp = tmp + P*(P+1);
+
     std::unique_ptr<size_t[]> Pbuf_ { new size_t [ 2*cols ] };
 
     P_in  = Pbuf_.get();
@@ -145,6 +152,7 @@ threadlocal_buffer<real>::threadlocal_buffer( const threadlocal_buffer &rhs ):
         r              = nullptr; rinv           = nullptr;
         cos_alpha      = nullptr; sin_alpha      = nullptr;
         cos_beta       = nullptr; sin_beta       = nullptr;
+        zeros          = nullptr; trash          = nullptr;
          swap_real_in  = nullptr;  swap_imag_in  = nullptr;
          swap_real_out = nullptr;  swap_imag_out = nullptr;
         trans_real_in  = nullptr; trans_imag_in  = nullptr;
@@ -189,6 +197,9 @@ threadlocal_buffer<real>::threadlocal_buffer( const threadlocal_buffer &rhs ):
         trans_real_out[m] = buf_.get() + ( rhs.trans_real_out[m] - rhs.buf );
         trans_imag_out[m] = buf_.get() + ( rhs.trans_imag_out[m] - rhs.buf );
     }
+
+    zeros = buf_.get() + ( rhs.zeros - rhs.buf );
+    trash = buf_.get() + ( rhs.trash - rhs.buf );
 
     std::unique_ptr<size_t[]> Pbuf_ { new size_t [ 2*cols ] };
     std::memcpy(Pbuf_.get(), rhs.Pbuf, 2*cols*sizeof(size_t));
@@ -241,6 +252,8 @@ void threadlocal_buffer<real>::swap( threadlocal_buffer &rhs ) noexcept
     std::swap(sin_alpha     ,rhs.sin_alpha     );
     std::swap(cos_beta      ,rhs.cos_beta      );
     std::swap(sin_beta      ,rhs.sin_beta      );
+    std::swap(trash         ,rhs.trash         );
+    std::swap(zeros         ,rhs.zeros         );
     std::swap( swap_real_in ,rhs. swap_real_in );
     std::swap( swap_imag_in ,rhs. swap_imag_in );
     std::swap( swap_real_out,rhs. swap_real_out);

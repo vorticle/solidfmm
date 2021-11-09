@@ -265,7 +265,7 @@ void m2l_impl( const operator_data<real> &op, threadlocal_buffer<real> &buf )
     for ( size_t n = 0; n <  Pmax_in; ++n )
     {
         // Copy data from solids into buffer.
-        kernel->solid2buf( buf.solid_in, buf.P_in, buf.swap_real_in, buf.swap_imag_in, n );
+        kernel->solid2buf( buf.solid_in, buf.zeros, buf.P_in, buf.swap_real_in, buf.swap_imag_in, n );
         
         // Transformation 
         forward_transform_M( op, buf, n );
@@ -310,7 +310,7 @@ void m2l_impl( const operator_data<real> &op, threadlocal_buffer<real> &buf )
 
         // Add result to output solids.
         kernel->buf2solid( buf.swap_real_out, buf.swap_imag_out,
-                           buf.solid_out, buf.P_out, n );
+                           buf.solid_out, buf.trash, buf.P_out, n );
     }
 }
 
@@ -345,7 +345,7 @@ void m2m_impl( const operator_data<real> &op, threadlocal_buffer<real> &buf )
     for ( size_t n = 0; n <  Pmax_in; ++n )
     {
         // Copy data from solids into buffer.
-        kernel->solid2buf( buf.solid_in, buf.P_in, buf.swap_real_in, buf.swap_imag_in, n );
+        kernel->solid2buf( buf.solid_in, buf.zeros, buf.P_in, buf.swap_real_in, buf.swap_imag_in, n );
         
         // Transformation 
         forward_transform_M( op, buf, n );
@@ -391,7 +391,7 @@ void m2m_impl( const operator_data<real> &op, threadlocal_buffer<real> &buf )
 
         // Add result to output solids.
         kernel->buf2solid( buf.swap_real_out, buf.swap_imag_out,
-                           buf.solid_out, buf.P_out, n );
+                           buf.solid_out, buf.trash, buf.P_out, n );
     }
 }
 
@@ -422,7 +422,7 @@ void l2l_impl( const operator_data<real> &op, threadlocal_buffer<real> &buf )
     for ( size_t n = 0; n < Pmax_in; ++n )
     {
         // Copy data from solids into buffer.
-        kernel->solid2buf( buf.solid_in, buf.P_in, buf.swap_real_in, buf.swap_imag_in, n );
+        kernel->solid2buf( buf.solid_in, buf.zeros, buf.P_in, buf.swap_real_in, buf.swap_imag_in, n );
         
         // Transformation 
         forward_transform_L( op, buf, n );
@@ -465,7 +465,7 @@ void l2l_impl( const operator_data<real> &op, threadlocal_buffer<real> &buf )
 
         // Add result to output solids.
         kernel->buf2solid( buf.swap_real_out, buf.swap_imag_out,
-                           buf.solid_out, buf.P_out, n );
+                           buf.solid_out, buf.trash, buf.P_out, n );
     }
 }
 

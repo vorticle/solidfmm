@@ -60,12 +60,12 @@ public:
                                float *real_out, float *imag_out,
                          size_t n, size_t Pmax ) const noexcept override;
 
-    void solid2buf( const float *const *solids, const size_t *P,
+    void solid2buf( const float *const *solids, const float *const zeros, const size_t *P,
                           float *real_out, float *imag_out,
                     size_t n ) const noexcept override;
 
     void buf2solid( const float *real_in, const float *imag_in, 
-                          float **solids, const size_t *P,
+                          float **solids, float *trash, const size_t *P,
                     size_t n ) const noexcept override;
 };
 
@@ -104,12 +104,12 @@ public:
                                double *real_out, double *imag_out,
                          size_t n, size_t Pmax ) const noexcept override;
 
-    void solid2buf( const double *const *solids, const size_t *P,
+    void solid2buf( const double *const *solids, const double *const zeros, const size_t *P,
                           double *real_out, double *imag_out, 
                     size_t n ) const noexcept override;
 
     void buf2solid( const double *real_in, const double *imag_in, 
-                          double **solids, const size_t *P,
+                          double **solids, double *trash, const size_t *P,
                     size_t n ) const noexcept override;
 };
 

@@ -80,13 +80,35 @@ void test( size_t P )
 
     L.resize(P); 
     L.zeros(); 
+
     operator_handle<real> op(std::max(P,size_t(1)));
       buffer_handle<real> buf(op);
 
-    solid<real> *Mptr = &M;
-    solid<real> *Lptr = &L;
-    m2l( op, buf, 1, &Mptr, &Lptr, &xab, &yab, &zab );
-    dot( L, R<real>(P, (x-xb), (y-yb), (z-zb)), &res );
+    solid<real> *Mptr[] = { &M, &M, &M, &M, &M, &M, &M, &M,
+                            &M, &M, &M, &M, &M, &M, &M, &M,
+                            &M, &M, &M, &M, &M, &M, &M, &M,
+                            &M, &M, &M, &M, &M, &M, &M, &M };
+    solid<real> *Lptr[] = { &L, &L, &L, &L, &L, &L, &L, &L,
+                            &L, &L, &L, &L, &L, &L, &L, &L,
+                            &L, &L, &L, &L, &L, &L, &L, &L,
+                            &L, &L, &L, &L, &L, &L, &L, &L };
+    const real   xx[]   = { xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab };
+    const real   yy[]   = { yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab };
+    const real   zz[]   = { zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab };
+
+    m2l( op, buf, 32, Mptr, Lptr, xx, yy, zz );
+
+
+    dot( L, R<real>(P, (x-xb), (y-yb), (z-zb)), &res ); res /= 32;
     std::cout << "L-expansion after M2L: " << std::setw(10)  << r*std::abs(res-1/r) << ".\n";
 }
 

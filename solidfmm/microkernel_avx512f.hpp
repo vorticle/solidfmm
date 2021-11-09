@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU General Public License along with
  * solidfmm; see the file COPYING.  If not see http://www.gnu.org/licenses.
  */
-#ifndef SOLIDFMM_MICROKERNEL_AVX_HPP
-#define SOLIDFMM_MICROKERNEL_AVX_HPP
+#ifndef SOLIDFMM_MICROKERNEL_AVX512F_HPP
+#define SOLIDFMM_MICROKERNEL_AVX512F_HPP
 
 #ifdef __x86_64__
 #include <solidfmm/microkernel.hpp>
@@ -27,20 +27,20 @@
 namespace solidfmm
 {
 
-class microkernel_float_avx: public microkernel<float>
+class microkernel_float_avx512f: public microkernel<float>
 {
 public:
     static bool available() noexcept;
 
-    microkernel_float_avx();
+    microkernel_float_avx512f();
 
-    virtual ~microkernel_float_avx() = default;
+    virtual ~microkernel_float_avx512f() = default;
 
     virtual void euler( const float *x,   const float *y, const float *z,
                               float *r,         float *rinv,
                               float *cos_alpha, float *sin_alpha,
                               float *cos_beta,  float *sin_beta,
-                       size_t k ) const noexcept override;
+                      size_t k ) const noexcept override;
 
     virtual void rotscale( const float *cos,      const float *sin,      const float *scale,
                            const float *real_in,  const float *imag_in,
@@ -58,7 +58,7 @@ public:
 
     virtual void swap2trans_buf( const float  *real_in,  const float  *imag_in,
                                        float **real_out,       float **imag_out,
-                                 size_t n ) const noexcept override;
+                                size_t n ) const noexcept override;
 
     virtual void trans2swap_buf( const float *const *const real_in, 
                                  const float *const *const imag_in,
@@ -66,22 +66,22 @@ public:
                                  size_t n, size_t Pmax ) const noexcept override;
 
     virtual void solid2buf( const float *const *solids, const float *const zeros, const size_t *P,
-                                  float *real_out, float *imag_out,
+                                  float *real_out, float *imag_out, 
                             size_t n ) const noexcept override;
 
-    virtual void buf2solid( const float  *real_in, const float *imag_in, 
-                                  float **solids, float *trash, const size_t *P,
+    virtual void buf2solid( const float *real_in, const float *imag_in, 
+                                 float **solids, float *trash, const size_t *P,
                             size_t n ) const noexcept override;
 };
 
-class microkernel_double_avx: public microkernel<double>
+class microkernel_double_avx512f: public microkernel<double>
 {
 public:
     static bool available() noexcept;
 
-    microkernel_double_avx();
+    microkernel_double_avx512f();
 
-    virtual ~microkernel_double_avx() = default;
+    virtual ~microkernel_double_avx512f() = default;
 
     virtual void euler( const double *x,   const double *y, const double *z,
                               double *r,         double *rinv,

@@ -76,11 +76,38 @@ void test( size_t P )
     const real zab = (zb-za);
 
     solid<real> L2(P);
+
+    solid<real> *Lptr[] = { &L, &L, &L, &L, &L, &L, &L, &L,
+                            &L, &L, &L, &L, &L, &L, &L, &L,
+                            &L, &L, &L, &L, &L, &L, &L, &L,
+                            &L, &L, &L, &L, &L, &L, &L, &L };
+
+    solid<real> *L2ptr[] = { &L2, &L2, &L2, &L2, &L2, &L2, &L2, &L2,
+                             &L2, &L2, &L2, &L2, &L2, &L2, &L2, &L2,
+                             &L2, &L2, &L2, &L2, &L2, &L2, &L2, &L2,
+                             &L2, &L2, &L2, &L2, &L2, &L2, &L2, &L2 };
+
+    const real   xx[]   = { xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab };
+
+    const real   yy[]   = { yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab };
+
+    const real   zz[]   = { zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab };
+
     solidfmm::operator_data<real>      op(std::max(P,size_t(1)));
     solidfmm::threadlocal_buffer<real> buf(op);
-    solid<real> *Lptr = &L, *L2ptr = &L2;
-    l2l( op, buf, 1, &Lptr, &L2ptr, &xab, &yab, &zab );
-    dot( L2, R<real>(P,(x-xb),(y-yb),(z-zb)), &res );
+
+    l2l( op, buf, 32, Lptr, L2ptr, xx, yy, zz );
+
+    dot( L2, R<real>(P,(x-xb),(y-yb),(z-zb)), &res ); res /= 32;
     std::cout << "L(B)-expansion after L2L: " << std::setw(10)  << r*std::abs(res-1/r) << ".\n";
 }
 

@@ -76,12 +76,37 @@ void test( size_t P )
     const real zab = (zb-za);
 
     solid<real> M2(P);
+    solid<real> M3(P);
+    solid<real> M4(P);
     solidfmm::operator_data<real>      op(std::max(P,size_t(1)));
     solidfmm::threadlocal_buffer<real> buf(op);
-    solid<real> *Mptr  = &M;
-    solid<real> *M2ptr = &M2;
-    m2m( op, buf, 1, &Mptr, &M2ptr, &xab, &yab, &zab );
-    dot( M2, S<real>(P,(x-xb),(y-yb),(z-zb)), &res );
+
+    solid<real> *Mptr[] = { &M, &M, &M, &M, &M, &M, &M, &M,
+                            &M, &M, &M, &M, &M, &M, &M, &M };
+
+    solid<real> *M2ptr[] = { &M2, &M2, &M2, &M2, &M2, &M2, &M2, &M2,
+                             &M2, &M2, &M2, &M2, &M2, &M2, &M2, &M2,
+                             &M2, &M2, &M2, &M2, &M2, &M2, &M2, &M2,
+                             &M2, &M2, &M2, &M2, &M2, &M2, &M2, &M2 };
+
+    const real   xx[]   = { xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab,
+                            xab, xab, xab, xab, xab, xab, xab, xab };
+
+    const real   yy[]   = { yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab,
+                            yab, yab, yab, yab, yab, yab, yab, yab };
+
+    const real   zz[]   = { zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab,
+                            zab, zab, zab, zab, zab, zab, zab, zab };
+
+    m2m( op, buf, 32, Mptr, M2ptr, xx, yy, zz );
+
+    dot( M2, S<real>(P,(x-xb),(y-yb),(z-zb)), &res ); res /= 32;
     std::cout << "M(B)-expansion after M2M: " << std::setw(10)  << r*std::abs(res-1/r) << ".\n";
 }
 

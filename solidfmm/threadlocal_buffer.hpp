@@ -54,6 +54,7 @@ public:
     real *r, *rinv;
     real *cos_alpha, *sin_alpha;
     real *cos_beta,  *sin_beta;
+    real *zeros, *trash;
 
     real   *swap_real_in,    *swap_imag_in; 
     real   *swap_real_out,   *swap_imag_out; 
