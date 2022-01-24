@@ -1,7 +1,11 @@
 October 29th, 2021: Initial Release of solidfmm.
 
 November 9th, 2021: solidfmm-1.1
-
 Added support for AVX-512.
 AVX/AVX2 in double precision: increased performance by 15-20%
+
+January 24th, 2022: solidfmm-1.2
+Added a user guide.
+Added support for vector-valued solids and evaluating the gradients
+of the solid harmonics.
 
