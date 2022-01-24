@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2022 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -52,10 +52,11 @@ void dot_impl( const solid<real> &A, const solid<real> &B, real *result ) noexce
         const real *b { B.memptr() + Bstride*db };
         for ( size_t k = 0; k < N; ++k )
             tmp += a[k]*b[k];
-       
+      
+        // The m = 0 column 
         real tmp2 { 0 };
         for ( size_t k = 0; k < P; ++k )
-            tmp2 += A.re(k,0)*B.re(k,0);
+            tmp2 += a[k*(k+1)] * b[k*(k+1)];
 
         *result++ = real(2)*tmp - tmp2;
     }

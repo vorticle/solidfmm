@@ -68,6 +68,11 @@ operator_handle<real>::operator=( const operator_handle &rhs )
     return *this;
 }
 
+template <typename real>
+buffer_handle<real> operator_handle<real>::make_buffer() const
+{
+    return buffer_handle<real> { *this };
+}
 
 template <typename real>
 buffer_handle<real>::buffer_handle():

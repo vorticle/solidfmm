@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2022 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -234,9 +234,9 @@ solid<real> dS_impl( size_t P, real x, real y, real z )
     const real r2invy = -2*y * r2inv * r2inv;
     const real r2invz = -2*z * r2inv * r2inv;
      val.re(0,0)   = std::sqrt(r2inv);
-    grad.re(0,0,0) = 0.5 * r2invx / val.re(0,0);
-    grad.re(0,0,1) = 0.5 * r2invy / val.re(0,0);
-    grad.re(0,0,2) = 0.5 * r2invz / val.re(0,0);
+    grad.re(0,0,0) = -x*val.re(0,0)*val.re(0,0)*val.re(0,0);
+    grad.re(0,0,1) = -y*val.re(0,0)*val.re(0,0)*val.re(0,0);
+    grad.re(0,0,2) = -z*val.re(0,0)*val.re(0,0)*val.re(0,0);
 
     if ( P == 1 ) return grad;
 
@@ -251,9 +251,9 @@ solid<real> dS_impl( size_t P, real x, real y, real z )
     grad.re(1,1,2) = x*r2invz*val.re(0,0) + x*r2inv*grad.re(0,0,2);
     
      val.im(1,1)   = y*r2inv *val.re(0,0);
-    grad.re(1,1,0) = y*r2invx*val.re(0,0) + y*r2inv*grad.re(0,0,0);
-    grad.re(1,1,1) = y*r2invy*val.re(0,0) + y*r2inv*grad.re(0,0,1) + r2inv*val.re(0,0);
-    grad.re(1,1,2) = y*r2invz*val.re(0,0) + y*r2inv*grad.re(0,0,2);
+    grad.im(1,1,0) = y*r2invx*val.re(0,0) + y*r2inv*grad.re(0,0,0);
+    grad.im(1,1,1) = y*r2invy*val.re(0,0) + y*r2inv*grad.re(0,0,1) + r2inv*val.re(0,0);
+    grad.im(1,1,2) = y*r2invz*val.re(0,0) + y*r2inv*grad.re(0,0,2);
 
     // First do the diagonal.
     for ( size_t m = 2; m < P; ++m )
@@ -298,9 +298,9 @@ solid<real> dS_impl( size_t P, real x, real y, real z )
         grad.re(m+1,m,2) = facz*val.re(m,m) + fac*grad.re(m,m,2);
 
          val.im(m+1,m)   = fac *val.im(m,m);
-        grad.re(m+1,m,0) = facx*val.im(m,m) + fac*grad.im(m,m,0);
-        grad.re(m+1,m,1) = facy*val.im(m,m) + fac*grad.im(m,m,1);
-        grad.re(m+1,m,2) = facz*val.im(m,m) + fac*grad.im(m,m,2);
+        grad.im(m+1,m,0) = facx*val.im(m,m) + fac*grad.im(m,m,0);
+        grad.im(m+1,m,1) = facy*val.im(m,m) + fac*grad.im(m,m,1);
+        grad.im(m+1,m,2) = facz*val.im(m,m) + fac*grad.im(m,m,2);
     }
 
     // Now the rest.
@@ -341,7 +341,7 @@ solid<real> dS_impl( size_t P, real x, real y, real z )
         grad.im(n,m,1) = ( cy*z*(2*n-1) - (n+m-1)*(n-m-1)*dy) * r2inv +
                          ( c *z*(2*n-1) - (n+m-1)*(n-m-1)*d ) * r2invy;
         grad.im(n,m,2) = ( (cz*z + c)*(2*n-1) - (n+m-1)*(n-m-1)*dz) * r2inv +
-                         ( c *z*(2*n-1) - (n+m-1)*(n-m-1)*d ) * r2invx;
+                         ( c *z*(2*n-1) - (n+m-1)*(n-m-1)*d ) * r2invz;
              
     }
 

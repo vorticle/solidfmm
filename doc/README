@@ -1,0 +1,19 @@
+solidfmm's documentation is written using LaTeX. By default, solidfmm comes
+with the readily compiled PDF containing its documentation.
+
+If you want to edit the documentation, you will need a TeX distribution to
+compile it yourself. How to install such a distribution is beyond the scope
+of this project: it depends on the operating system you are
+using, and many guides on how to do this can be found on the internet.
+
+Once you have installed your favourite LaTeX distribution, you can compile
+the document by issuing the following commands in *this* folder:
+
+lualatex solidfmm
+biber solidfmm
+lualatex solidfmm
+lualatex solidfmm
+
+This should produce the file solidfmm.pdf, which you can read with
+any PDF reader of your choice.
+

@@ -3,6 +3,12 @@
                     solidfmm – Wir ziehen alle Register!
 
 
+DETAILED DOCUMENTATION IN THE "doc" FOLDER!!
+
+For detailed instructions, please refer to the user guide in the doc
+folder. This is especially the case if you downloaded solidfmm from
+GitHub: in this case additional steps are necessary: autoreconf --install.
+
 To compile and install solidfmm you will need a fairly recent version of the
 GNU Compiler Collection (GCC) *or* LLVM (clang) with support for C++17. 
 
@@ -19,22 +25,7 @@ The general installation instructions follow below. I have not implemented
 "make check", but apart from this the general instructions from below should
 apply.
 
-The reason for requiring specific compilers is the following. The most
-performance critical parts of the code are written in assembly language,
-in the form of inline assembly embedded in the C++ code. Amazingly, all
-compilers seem to have different formats for this, and there is no single
-agreed on format. I decided on GCC’s syntax, because GCC is available for
-virtually all platforms, it is free software, and fairly up-to-date with
-current C++ standards. Clang also uses the same syntax.
-
-Additionally, the code uses the "__builtin_cpu_supports()" feature to detect
-the availability of AVX and AVX2 at runtime. This is a GCC extension, which
-is also supported by clang. I haven’t found a slim, compiler independent
-library to do this.
-
-Support for other compilers might be added later if necessary.
-
-General installation instructions follow.
+General installation instructions for the GNU Autotools follow below.
 
 Installation Instructions
 *************************

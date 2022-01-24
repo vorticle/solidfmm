@@ -1,0 +1,3096 @@
+% !TeX root       = solidfmm.tex
+% !TeX program    = lualatex
+% !TeX encoding   = utf-8
+% !TeX spellcheck = en_GB
+\documentclass{scrbook}
+\KOMAoption{chapterprefix}{true}
+\KOMAoption{numbers}{noendperiod}
+\KOMAoption{chapterentrydots}{true}
+\setcapindent{1em}
+\addtokomafont{disposition}{\rmfamily}
+
+\usepackage[british]{babel}
+\usepackage[english=british]{csquotes}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+\usepackage{fontspec}
+\usepackage{unicode-math}
+
+%%
+%% Alternative font options
+%%
+%\setmainfont{TeX Gyre Bonum}
+%\setmathfont{Tex Gyre Bonum Math}
+%\setmainfont{TeX Gyre Pagella}
+%\setmathfont{Tex Gyre Pagella Math}
+%\setmainfont{TeX Gyre Termes}
+%\setmathfont{Tex Gyre Termes Math}
+
+\setmainfont[Numbers=OldStyle,Ligatures={TeX,Common}]{TeX Gyre Schola}
+\setmathfont{Tex Gyre Schola Math}
+\setsansfont[Scale=MatchLowercase]{TeX Gyre Heros}
+%\setmonofont{TeX Gyre Cursor}
+\setmonofont[Scale=MatchLowercase,Contextuals={Alternate}]{Fira Code}
+
+% A bug in the math fonts: they do not have the setminus.
+\AtBeginDocument{\renewcommand\setminus{\smallsetminus}}
+
+\usepackage{xcolor}
+\newcommand{\colour}{\color}
+\newcommand{\colourlet}{\colorlet}
+\colourlet{grey}{gray}
+\colourlet{darkgrey}{darkgray}
+
+\usepackage{hyperref}
+\usepackage{hyperxmp}
+\colourlet{internallinkcolour}{green!50!black}
+\colourlet{externallinkcolour}{red!50!black}
+\hypersetup
+{
+  pdfauthor          = {Matthias Kirchhart},
+  pdfsubject         = {Documentation},
+  pdftitle           = {solidfmm},
+  pdfkeywords        = {C++, library, fast multipole method, Solid harmonics},
+  pdfencoding        = {unicode},
+  pdfcopyright       = {Copyright \textcopyright\ 2022 Matthias Kirchhart.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the ‘GNU Free Documentation License’, Version 1.3 or any
+later version published by the Free Software Foundation; with no Invariant
+Sections, Front-Cover Texts, and no Back-Cover Texts. A copy of this licence is
+included in Appendix A of this work.},
+  pdflicenseurl      = {https://www.gnu.org/licenses/fdl-1.3.html},
+  pdflang            = {en-GB},
+  pdfdisplaydoctitle = {true},
+  unicode            = {true},
+  colorlinks         = {true}, % Set to false for print version.
+  allcolors          = internallinkcolour,
+  urlcolor           = externallinkcolour,
+  frenchlinks        = false,
+  pdfborder          = {0 0 0},
+  naturalnames       = false,
+  hypertexnames      = false,
+  breaklinks         = true
+}
+
+\XMPLangAlt{x-default}{%
+pdfcopyright={Copyright \textcopyright\ 2022 Matthias Kirchhart.
+Permission is granted to copy, distribute and/or modify this document under the
+terms of the ‘GNU Free Documentation License’, Version 1.3 or any later version
+published by the Free Software Foundation; with no Invariant Sections, Front-%
+Cover Texts, and no Back-Cover Texts. A copy of this licence is included in
+Appendix A of this work.}
+}
+
+\usepackage[nameinlink,noabbrev,capitalize]{cleveref}
+
+\usepackage{listings}
+\usepackage{lstfiracode}
+\lstloadlanguages{bash,[11]C++}
+\lstset{basicstyle=\ttfamily,style=FiraCodeStyle}
+\colourlet{commentcolour}{darkgrey!50!cyan}
+\lstdefinestyle{bash}
+{
+    language=bash,
+    commentstyle=\colour{commentcolour},
+    keywordstyle={}
+}
+
+
+\lstdefinestyle{cpp}
+{
+    language=[11]C++,
+    commentstyle=\colour{commentcolour},
+    keywordstyle=\colour{green!60!black},
+    directivestyle=\colour{red!50!black},
+    stringstyle=\colour{purple},
+    morekeywords={size_t}
+}
+
+\usepackage{tikz}
+\usetikzlibrary{math,fadings}
+\usepackage[listings,skins,breakable]{tcolorbox}
+\usepackage{booktabs}
+
+\usepackage
+[
+	backend=biber,
+	language=british,
+	sorting=none,
+    sortcites=true,
+	sortlocale=en-GB,
+    giveninits=true,
+    maxnames=4,
+    isbn=true,
+    doi=true,
+    autocite=superscript
+]{biblatex}
+\DeclareCiteCommand{\supercite}[\mkbibsuperscript]{%
+\iffieldundef{prenote}{}{\BibliographyWarning{Ignoring prenote argument}}%
+\iffieldundef{postnote}{}{}}%
+{\bibopenbracket\usebibmacro{citeindex}\usebibmacro{cite}\usebibmacro{postnote}\bibclosebracket}{\supercitedelim}{}
+
+\addbibresource{literature.bib}
+
+\recalctypearea
+\usepackage{microtype}
+
+
+% Finally, our own commands.
+\newcommand{\solidfmm}{\texttt{solidfmm}}
+\newcommand{\PtoM}{\textsc{p2m}}
+\newcommand{\PtoL}{\textsc{p2l}}
+\newcommand{\MtoM}{\textsc{m2m}}
+\newcommand{\MtoL}{\textsc{m2l}}
+\newcommand{\LtoL}{\textsc{l2l}}
+\newcommand{\naturals}{\ensuremath{\mathbb{N}}}
+\newcommand{\integers}{\ensuremath{\mathbb{Z}}}
+\newcommand{\rationals}{\ensuremath{\mathbb{Q}}}
+\newcommand{\reals}{\ensuremath{\mathbb{R}}}
+\newcommand{\complex}{\mathbb{C}}
+\newcommand{\wholespace}{\ensuremath{\reals^3}}
+
+\newcommand{\vv}[1]{\ensuremath{\symbf{#1}}} % Vectors
+\newcommand{\dd}{\ensuremath{\symrm{d}}}     % Differential d
+\newcommand{\bigO}[1]{\ensuremath{\symcal{O}\left({#1}\right)}}
+
+\begin{document}
+
+\newtcblisting[blend into=listings]{commandshell}[1]%
+{
+    boxsep=-4pt,
+    enhanced,
+    drop fuzzy shadow,
+    listing remove caption=false,
+	listing only,
+    listing options={style=bash,basicstyle=\ttfamily\footnotesize},
+	coltitle=black,
+    attach boxed title to bottom left={yshift=-5pt,xshift=-4pt},
+    boxed title style={enhanced jigsaw, colback=white, sharp corners,
+                       boxrule=0pt,colframe=white},
+    title={#1},
+    breakable
+}
+
+\newtcblisting{commandshell*}%
+{
+    boxsep=-4pt,
+    enhanced,
+    drop fuzzy shadow,
+	listing only,
+    listing options={style=bash,basicstyle=\ttfamily\footnotesize},
+    breakable,
+}
+
+\newtcblisting[blend into=listings]{cppcode}[1]{%
+    boxsep=-4pt,
+    enhanced,
+    drop fuzzy shadow,
+    listing remove caption=false,
+	listing only,
+    listing options={style=cpp,basicstyle=\ttfamily\footnotesize},
+	coltitle=black,
+    attach boxed title to bottom left={yshift=-5pt,xshift=-4pt},
+    boxed title style={enhanced jigsaw, colback=white, sharp corners,
+                       boxrule=0pt,colframe=white},
+    title={#1},
+    breakable
+}
+
+\newtcblisting{cppcode*}%
+{
+    boxsep=-4pt,
+    enhanced,
+    breakable,
+    drop fuzzy shadow,
+	listing only,
+    listing options={style=cpp,basicstyle=\ttfamily\footnotesize},
+    breakable
+}
+
+\frontmatter
+
+\subject{Documentation}
+\title{\solidfmm}
+\subtitle{Version 1.2}
+\author{Matthias Kirchhart}
+\date{January 2022}
+
+\uppertitleback
+{%
+Dr.~Matthias Kirchhart\\
+Angewandte und Computergestützte Mathematik\\
+Rheinisch-Westfälische Technische Hochschule Aachen\\
+Schinkelstraße 2\\
+52062 Aachen\\
+Germany\\[\baselineskip]
+\begin{tabular}{@{}ll}
+E-mail:  &
+\texttt{%
+\href{mailto:kirchhart@acom.rwth-aachen.de}{kirchhart@acom.rwth-aachen.de}
+}\\
+Website: & 
+\url{http://www.acom.rwth-aachen.de/5people/kirchhart/start}
+\end{tabular}
+}
+
+\lowertitleback
+{%
+Copyright © 2022 Matthias Kirchhart.\\[1em]
+Permission is granted to copy, distribute and/or modify this document under the
+terms of the \enquote{GNU Free Documentation License}, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+no Front-Cover Texts, and no Back-Cover Texts. A copy of this licence is
+included in \Cref{chp:gnufdl} of this work.
+}
+
+
+\maketitle
+
+\tableofcontents
+
+\mainmatter
+
+\part{User Guide}
+
+\chapter{Quick Start}\label{chp:quickstart}
+This chapter is written for people who already have an understanding of 
+the fast multipole method and the expansions it uses. The definition of these
+expansions alongside with the notational conventions employed by \solidfmm\ are
+given \cref{chp:mathbackground}. That chapter also contains an introduction to
+these topics. A complete reference of the user interface is given
+in~\cref{chp:userreference}.
+
+We assume that you are familiar with the command line and a POSIX shell, that
+you have some background in programming in C++, and that you know how to use
+the standard development toolchain on GNU/Linux systems.
+
+\section{Licencing and Copyright}
+I, Matthias Kirchhart, am the sole author and copyright holder of \solidfmm.
+\solidfmm\ is free software. You may use, modify, and redistribute \solidfmm\
+under the terms and conditions of the \enquote{GNU General Public License} (GPL)
+as published by the Free Software Foundation, either version three, or, at your
+option, any later version. You should have received a copy of this licence
+document together with \solidfmm, it can also be found in \cref{chp:gnugpl} of
+this book. 
+
+The GPL gives you a lot of freedoms. However, it is a copyleft licence.
+Consider you write your own piece of software that makes use of \solidfmm. Then,
+in case you decide to publish or redistribute your software, you \emph{must}
+distribute it under the terms of the GPL. In particular, the GPL \emph{does not}
+allow you to incorporate \solidfmm\ into closed-source, non-free, commercial
+software for retail. If you wish to do so, please contact me to negotiate
+alternative licencing options.
+
+\section{Installing \solidfmm}
+
+\subsection{System Requirements}
+To compile and install \solidfmm\ you will need a fairly recent version of the
+GNU Compiler Collection (\lstinline|g++|) \emph{or} LLVM (\lstinline|clang++|)
+with support for C++17. 
+
+Apart from this, on Unix systems you will only need standard development tools,
+i.\,e., a POSIX compatible shell (like \lstinline|bash|), and \lstinline|make|.
+There are  no external library dependencies except for the standard C++ library.
+It should also be possible to compile under Windows using Cygwin or MinGW, but I
+have not tested this. If you downloaded \solidfmm\ from GitHub, you will
+additionally need the GNU Autotools: \lstinline|autoconf|, \lstinline|automake|,
+\lstinline|libtool|, and the software they depend on.
+
+The reason for requiring specific compilers is the following. The performance
+critical parts of the code---the so-called microkernels---are written in
+assembly language, in the form of \emph{inline assembly} which is directly
+embedded in the C++ code. Unfortunately, there is no consensus on how to do
+this, and different compilers have different formats. Even worse, Microsoft's
+compiler (MSVC) simply does not support inline assembly at all anymore.%
+\footnote{We quote: \enquote{Inline assembly is not supported on the ARM and x64
+processors.} \url{https://docs.microsoft.com/en-us/cpp/assembler/inline/%
+inline-assembler?view=msvc-170}} \solidfmm\ uses GCC's syntax, because GCC is
+available for almost all platforms, it is free software, and fairly up-to-date
+with current C++ standards. LLVM also uses the same syntax. Additionally, the
+code uses GCC's feature \lstinline|__builtin_cpu_supports()| to detect the
+availability of AVX and AVX-512 at runtime. This extension is also supported by
+LLVM. 
+
+
+\subsection{Download Sources}
+\solidfmm\ is available from two alternative sources:
+\begin{enumerate}
+\item\emph{Recommended:} From my institution's cloud server at
+\url{https://rwth-aachen.sciebo.de/s/YIJFvSERVBiOkbc}.
+\item From GitHub at \url{https://github.com/vorticle/solidfmm}. This repository
+mostly exists to increase visibility and for the convenience of people who like
+GitHub. I do not use GitHub for development, as I host my repositories myself.
+Only the current releases will be pushed to this repository, without the
+development history or anything else. Please \emph{do not} send me pull requests
+or similar things via GitHub but contact me directly via E-mail. You will
+additionally need the GNU Autotools to use these releases.
+\end{enumerate}
+
+In this text we will focus on the first option. The cloud server directory
+contains all releases of \solidfmm\ as compressed \emph{tarballs}, which have
+file endings \lstinline|.tar.xz|. Additionally, for each release, there is a
+digital signature with ending \lstinline|.tar.xz.asc|. By default, you would
+choose the latest release and download both the tarball and the respective
+digital signature file. We will assume that you created a folder on your machine
+for these files and opened a shell there. If you download \solidfmm\ for the
+first time, you should also download the file 
+\lstinline|kirchhart_pubkey.gpg|, which contains my OpenPGP public key.
+
+\subsection{Verification (Optional)}
+The next step is to verify the authenticity of the downloaded files. For this
+you will need the GNU Privacy Guard, also known as GnuPG.\autocite{gnupg} Its
+executable is commonly called \lstinline|gpg|. It comes preinstalled by default
+on most current GNU/Linux distributions. Here we will only describe how to use
+this software to verify the authenticity of \solidfmm, a detailed user guide
+of \lstinline|gpg| is given on its project website. We will only describe the
+process for the tarball release, which is the recommended download option.
+For the GitHub release we assume that you have sufficient familiarity with
+\lstinline|git| to perform the verification yourself.
+
+
+\subsubsection{Setting up GnuPG}
+GnuPG only needs to be set up once. If you have already done so during
+installations of previous versions, you can safely skip this section.
+
+You will need your own keypair. If you do not know what this is, you probably
+do not have one yet. In this case you can easily create one by entering
+\begin{commandshell*}
+gpg --gen-key
+\end{commandshell*}
+and following the instructions on your screen. This a local procedure: no data
+is submitted to the internet and your privacy is preserved.
+
+Once you have your own keypair, you can import my key into GnuPG.
+\begin{commandshell*}
+gpg --import kirchhart_pubkey.gpg
+\end{commandshell*}
+You now need to double check if my key itself has not been compromised. This
+can \emph{only} be achieved by \emph{manually} comparing it to a second,
+trustworthy source. To do this, first display the key's fingerprint:
+\begin{commandshell*}
+gpg --fingerprint "Matthias Kirchhart"
+\end{commandshell*}
+This command should show something like:
+\begin{commandshell*}
+pub   rsa4096 2012-11-02 [SC]
+      BC55 D501 A8DC 2D9B D2C9  95F3 00D1 76A4 818C 2BCE
+uid        [ ultimativ ] Matthias Kirchhart <matthias.kirchhart@rwth-aachen.de>
+uid        [ ultimativ ] Matthias Kirchhart <kirchhart@acom.rwth-aachen.de>
+sub   rsa4096 2012-11-02 [A]
+sub   rsa4096 2012-11-02 [E]
+\end{commandshell*}
+The long string of characters \enquote{BC55 D501 A8DC…} is my public key's
+fingerprint. You have to compare this fingerprint with the one given on
+my personal website on
+\url{http://www.acom.rwth-aachen.de/5people/kirchhart/start}.
+\emph{Only if the two fingerprints match \textbf{completely}}, you have
+successfully imported my public key. If they do not match, something strange
+is going on and you should abort immediately, check your computer for viruses,
+etc.
+
+Usually, however, things should work out just fine. In this case, you sign this
+process off by adding your signature:
+\begin{commandshell*}
+gpg --sign-key "Matthias Kirchhart"
+\end{commandshell*}
+This procedure might seem rather tedious, but security comes at a price. Also
+note  that these steps only need to be carried out once. You will never need to
+do this again, unless you move to a different computer and forget moving your
+GnuPG data. You do \emph{not} need to set up GnuPG again when installing
+updates to \solidfmm.
+
+\subsubsection{Verifying the Tarball}
+Once you set up GnuPG, verifying the tarball is easy. Simply run the following
+command in the folder into which you downloaded the tarball and the signature
+file. 
+\begin{commandshell*}
+gpg --verify solidfmm-1.2.tar.xz.asc solidfmm-1.2.tar.xz
+\end{commandshell*}
+The output should contain a message stating that the signature is correct. If
+so, verification is complete. Otherwise you have downloaded compromised files
+and should abort \emph{immediately}. Replace the version number {1{.}2} with the
+version you downloaded in the above command, if necessary.
+
+\subsection{Unpacking the Tarball}
+Once you have downloaded and (optionally) verified the tarball, it can be
+unpacked as follows.
+\begin{commandshell*}
+tar Jxf solidfmm-1.2.tar.xz
+\end{commandshell*}
+For this command to work, you will need \lstinline|tar|\autocite{gnutar} and the
+XZ utils\autocite{xzutils}, which come preinstalled by default on most current
+GNU/Linux systems. This should create a folder named \lstinline|solidfmm-1.2|,
+containing the source code of \solidfmm. Enter this folder by typing
+\begin{commandshell*}
+cd solidfmm-1.2
+\end{commandshell*}
+
+\subsection{Preparing a GitHub Release}
+If you downloaded \solidfmm\ from GitHub instead, you will need the GNU
+Autotools to generate the build system and the necessary scripts.
+\begin{commandshell*}
+autoreconf --install
+\end{commandshell*}
+After this compilation and installation instructions are identical to those
+for the tarball releases.
+
+\subsection{Configuring and Compiling}
+\solidfmm\ uses the GNU Autotools to configure, build, and install the library.
+These tools give you great flexibility in doing this and are well beyond the
+scope of this manual. These tools are, for example, described in detail in John
+Calcote's book\autocite{calcote2010}. In the simplest setting you can just
+enter the source directory and configure and compile using:
+\begin{commandshell*}
+./configure && make
+\end{commandshell*}
+
+The \lstinline|configure| script allows you to control many aspects of the
+process. For example, it is possible to only build the static library, or to
+only compile the dynamically linked version. You can chose the compiler,
+linker, optimisation flags, installation directories, and many more using
+environment  variables and options to the script. It is even possible to
+cross-compile for a different system. If you want to install \solidfmm\ in
+a non-standard location, you can do so by passing the \lstinline|--prefix|
+option:
+\begin{commandshell*}
+./configure --prefix=/your/preferred/location && make
+\end{commandshell*}
+However, you should only use this option if you know what you are doing: if you
+install \solidfmm\ to a non-standard location, you will need to configure your
+compiler and linker such that they know where to look for \solidfmm\ when using
+the library. A quick overview over some of the options that
+\lstinline|configure| supports can be seen by executing the following command:
+\begin{commandshell*}
+./configure --help
+\end{commandshell*}
+\noindent More detailed options are given in the file \lstinline|INSTALL|.
+
+One important aspect for \solidfmm\ is the choice of compiler. Only recent
+versions of the GNU Compiler Collection, i.\,e., \lstinline|g++|,%
+\autocite{gcc} and LLVM, i.\,e., \lstinline|clang++|,\autocite{clang} are
+supported. To specify the compiler to use, you can use the environment variable
+\lstinline|CXX|. For example:
+\begin{commandshell*}
+# To compile using clang++ use:
+CXX=clang++ ./configure && make
+
+# To compile using g++ use:
+CXX=g++ ./configure && make
+\end{commandshell*}
+\noindent If you do not specify \lstinline|CXX|, your system's default compiler
+will be used.
+
+\subsection{Installing}
+When compilation is complete, you can install \solidfmm. Unless you specified
+a different \lstinline|--prefix| when running \lstinline|configure|, \solidfmm\
+will be installed into your system's default locations for libraries and
+headers. These directories are protected, and can only be written to by the
+system administrator. On Unix systems you would thus first change to the
+administrator's account and install afterwards:
+\begin{commandshell*}
+su # Changes to the system administrator's account, requires his or her password
+make install
+exit # Important: leave administrator's account afterwards
+\end{commandshell*}
+
+Some current GNU/Linux distributions do not allow the use of \lstinline|su|
+anymore, because they claim it would be unsafe. As so often, when used properly,
+this is not true; however \lstinline|su| does have a history of being used
+incorrectly. For this reason these distributions promote the use of
+\lstinline|sudo| instead. If the above command does not work, on these systems,
+you can try using the following instead:
+\begin{commandshell*}
+sudo make install
+\end{commandshell*}
+This command requires \emph{your} password and not that of the administrator. It
+will only work if the system administrator has granted you the necessary rights.
+
+
+\section{Using the Library}
+
+\subsection{Headers and Linker Flags}
+The user interface consists of only four header files. Simply
+\lstinline|#include| them at the beginning of your source files:
+\begin{cppcode*}
+#include <solidfmm/solid.hpp>
+#include <solidfmm/handles.hpp>
+#include <solidfmm/harmonics.hpp>
+#include <solidfmm/translations.hpp>
+\end{cppcode*}
+
+All classes and functions of the library lie in the C++ namespace
+\lstinline|solidfmm|. When creating your programme, you will need to link
+against the library. For example, when using \lstinline|g++|, this can be
+achieved by adding the flag \lstinline|-lsolidfmm| as follows:
+\begin{commandshell*}
+# Compile your programme
+g++ -o yourprogramme.o -c yourprogramme.cpp
+
+# Link it into an executable
+g++ -o yourprogramme -lsolidfmm yourprogramme.o
+\end{commandshell*}
+
+\subsection{Initialisation}\label{sec:quickinit}
+Two kinds of objects are necessary to make use of the library: an 
+\lstinline|operator_handle|, which \emph{should} be shared among different
+threads, and for each thread a \lstinline|buffer_handle|, which \emph{must not}
+be shared among  different threads. To create these objects, you need to know
+the maximum order of multipole expansions that you are going to use. For
+example, if you know that you will never need expansion orders beyond 30, and
+you are working on a system with 8 cores, you would do the following:
+\begin{cppcode*}
+using std::vector;
+using solidfmm::operator_handle;
+using solidfmm::buffer_handle;
+
+// The maximum number of concurrent threads you are going to use.
+const size_t nthreads { 8 };
+
+// Only one such object is necessary; it can and should be shared among threads.
+operator_handle<double> op  { 30 }; 
+                                     
+// Each thread needs its own buffer; it must not be shared.
+vector<buffer_handle<double>> buffers(nthreads,op.make_buffer());
+\end{cppcode*}
+If you want to use single precision numbers, you can replace 
+\lstinline[style=cpp]|double| with \lstinline[style=cpp]|float|. For single
+precision the maximum order is limited by 18, due to the limits of this
+format. For double precision, it is safe to pass numbers larger than 30 to
+\lstinline|operator_handle|'s constructor, however, in this case, it would come
+with the cost of a slightly increased memory footprint.
+
+\subsection{Creating Expansions}
+Suppose we were given $N$ point charges at locations $(x_i,y_i,z_i)^\top
+\in\wholespace$ with associated charges $m_i\in\reals$, $i=0,\dotsc,N-1$. We
+now seek to create a multipole expansion of order $P=\text{15}$ around the point
+$(x_A,y_A,z_A)^\top\in\wholespace$. To do this so-called \textsc{p2m} operation
+in
+\solidfmm, one could use the following code.
+\begin{cppcode*}
+using solidfmm::solid;
+using solidfmm::fmadd;
+using solidfmm::harmonics::R; // Regular harmonics.
+
+size_t P { 15 };             // The order of the expansion you want to use.
+size_t N;                    // Number of point charges, initialised somewhere else.
+const double *x, *y, *z, *m; // Coordinates and charges, initialised somewhere else.
+
+// Objects of type solid store coefficients of multipole or local expansions.
+// Pass the desired order of the expansion. Initialised with zero coefficients.
+// You can also use "float" for single precision.
+solid<double> M( P ); 
+
+// Add the contribution of each point mass to multipole expansion.
+for ( size_t i = 0; i < N; ++i )
+    fmadd( m[i], R<double>(P,x[i]-xA,y[i]-yA,z[i]-zA), M );
+\end{cppcode*}
+
+After this, the object \lstinline|M| of type \lstinline|solid<double>| contains
+the coefficients $M_n^m\in\complex, n=0,\dotsc,P-1,\ m=-n,\dotsc,n$ of the
+multipole expansion.
+
+Although much less common, local expansions can be created directly from the
+given point charges (\textsc{p2l}) in almost the exact same way. All we need to
+do is to replace the regular harmonics with the singular ones. Thus, assume we
+wanted to create a local expansion for the same charges around the centre
+$(x_B,y_B,z_B)^\top\in\wholespace$. This can be achieved as follows:
+\begin{cppcode*}
+using solidfmm::solid;
+using solidfmm::fmadd;
+using solidfmm::harmonics::S; // Singular harmonics.
+
+solid<double> L( P ); 
+for ( size_t i = 0; i < N; ++i )
+    fmadd( m[i], S<double>(P,x[i]-xB,y[i]-yB,z[i]-zB), L );
+\end{cppcode*}
+
+We note that \solidfmm\ also supports vector-valued expansions. For this we
+refer the reader to \cref{chp:userreference}.
+
+\subsection{Evaluating Expansions}
+Evaluation of multipole and local expansions can be done using \lstinline|dot|.
+Assume we were given the coefficients $M_n^m\in\complex$, $n=0,\dotsc,P-1$,
+$m=-n,\dotsc,n$ of a multipole expansion of order $P$ around the centre
+$(x_A,y_A,z_A)^\top\in\wholespace$. To evaluate this expansion at some
+point $(x,y,z)^\top\in\wholespace$, you would do the following:
+\begin{cppcode*}
+using solidfmm::dot;
+using solidfmm::solid;
+using solidfmm::harmonics::S; // Singular harmonics.
+
+solid<double> M;    // Given coefficients,     initialised somewhere else.
+double xA, yA, zA;  // Given expansion centre, initialised somewhere else.
+double x,  y,  z;   // Given evaluation point, initialised somewhere else.
+
+double result { 0 };
+dot( M, S<double>(P,x-xA,y-yA,z-zA), &result );
+\end{cppcode*}
+
+Local expansions work similarly: here you need to replace the singular
+harmonics with the regular ones. Thus, assuming you were given the
+coefficients $L_n^m\in\complex$, $n=0,\dotsc,P-1$, $m=-n,\dotsc,n$ of a
+local expansion at centre $(x_B,y_B,z_B)^\top\in\wholespace$, you would
+evaluate it as follows:
+\begin{cppcode*}
+using solidfmm::dot;
+using solidfmm::solid;
+using solidfmm::harmonics::R; // Regular harmonics.
+
+solid<double> L;    // Given coefficients,     initialised somewhere else.
+double xB, yB, zB;  // Given expansion centre, initialised somewhere else.
+double x,  y,  z;   // Given evaluation point, initialised somewhere else.
+
+double result { 0 };
+dot( M, R<double>(P,x-xB,y-yB,z-zB), &result );
+\end{cppcode*}
+
+Again, we remark that \solidfmm\ also supports vector-valued expansions and
+refer to \cref{chp:userreference} for this.
+
+\subsection{Translations}\label{sec:quicktranslations}
+We now come to the main reason for the existence of this library: to provide an
+efficient implementation of the translation operators \textsc{m2m},
+\textsc{m2l}, and $\textsc{l2l}$. Assume we were given the following data,
+initialised
+somewhere else:
+\begin{cppcode*}
+// Number of translations you want to carry out.
+size_t howmany;
+
+// Arrays of size howmany, containing *pointers* to coefficients.
+solidfmm::solid<double> *input [howmany];   
+solidfmm::solid<double> *output[howmany];  
+
+// Shift vectors for the translations. That is, if the input coefficients
+// represent expansions about a point (xA,yA,zA), and the output coefficients
+// should be around another centre (xB,yB,zB), the shift-vectors would be
+// (xB-xA,yB-yA,zB-zA).
+double xshift[howmany]; 
+double yshift[howmany];
+double zshift[howmany];
+\end{cppcode*}
+
+We also assume that you already have initialised the library, as described
+in \cref{sec:quickinit}. To perform the actual translation, you just need to
+call \textsc{m2l}, or, respectively \textsc{m2m} and \textsc{l2l}, as follows:
+\begin{cppcode*}
+solidfmm::m2l(op,buffers[threadno],howmany,input,output,xshift,yshift,zshift);
+\end{cppcode*}
+Here, \lstinline|threadno| contains the number of the currently running
+thread, such that the operation uses the corresponding buffer. \lstinline|m2m|
+and \lstinline|l2l| are called analogously.
+
+The result of \lstinline|input[i]| is \emph{added} to \lstinline|output[i]|.
+Suppose you have 200 input expansions that you want to accumulate into a single
+output expansion \lstinline|L|. To achieve this, you can just repeat the
+output pointer:
+\begin{cppcode*}
+for ( int i = 0; i < 200; ++i )
+	output[i] = &L;
+
+solidfmm::m2l(op,buffers[threadno],howmany,input,output,xshift,yshift,zshift);
+\end{cppcode*}
+Similarly, input pointers can also be repeated if you want to translate one
+source to many targets. To make maximum use of the vectorisation, always call
+these operations with \lstinline|howmany| as big as possible. That is,
+\emph{do not} call \lstinline|m2l| 200 times with \lstinline|howmany = 1|.
+
+You may call \lstinline|m2m|, \lstinline|l2l|, and \lstinline|m2l|
+simultaneously from several threads. In this case, each thread needs its own
+buffer. You cannot have different threads  write to the same output, this will
+cause a race condition and undefined results.
+
+Note that these operations \emph{support mixed orders}, i.\,e.,
+\lstinline|input[i]| and \lstinline|output[i]| may have different expansion
+orders. Make sure that the output expansions are initialised and have the
+correct order! Default constructed objects of type \lstinline|solid<double>|
+will have order zero, so then nothing happens. If in doubt, before doing the
+translation, you may call:
+\begin{cppcode*}
+for ( size_t i = 0; i < howmany; ++i )
+{
+    output[i]->resize( P ); // Choose your desired output order here.
+    output[i]->zeros();     // Set all coefficients to zero.
+}
+\end{cppcode*}
+to set the order of the output expansions to \lstinline|P|.
+
+
+\chapter{Mathematical Background}\label{chp:mathbackground}
+In this chapter we will give a description of some of the mathematical
+background of the fast multipole method (FMM) and its use of the solid
+harmonics. If you are already familiar with these topics, this chapter will
+probably contain nothing new for you, except for maybe sign and notational
+conventions.
+
+\section{Motivation: Movement of Planets}
+Consider we have a set of $N$ planets in space, having location
+$\vv{x}_i = (x_i,y_i,z_i)^\top\in\wholespace$ (measured in metres) and mass
+$m_i\in\reals$ (measured in kilogrammes), $i=1,\dotsc,N-1$. Throughout this
+text, we will use a \textbf{bold} font to indicate three-dimensional vectors.
+These planets mutually attract each other through gravity. Thus, let us define
+the gravimetric potential, following Newton's law of gravity:
+\begin{equation}\label{eqn:gravimetric-potential}
+\varphi(x,y,z)\coloneqq
+G\sum_{i=0}^{N-1}\frac{m_i}{\sqrt{(x-x_i)^2 + 
+(y-y_i)^2 + (z-z_i)^2}} = 
+G\sum_{i=0}^{N-1}\frac{m_i}{|\vv{x}-\vv{x}_i|},
+\qquad
+\end{equation}
+where $|\vv{x}-\vv{x}_i|$ denotes the Euclidean distance between the point
+$\vv{x}=(x,y,z)^\top\in\wholespace$ and the location $\vv{x}_i$ of planet $i$,
+and $G\approx6.674\,\times\,10^{-11}\frac{\symrm{m}^3}{\symrm{kg}\,\symrm{s}^2}$
+is the universal gravitational constant. Then, applying Newton's laws of
+motion, the planet movements obey the following set of ordinary differential
+equations (ODEs):
+\begin{equation}
+\frac{\dd^2\vv{x}_i}{\dd t^2} = -\nabla\varphi(\vv{x}_i) =
+\sum_{\substack{j=0\\j\neq i}}^{N-1}
+Gm_j\,\frac{\phantom{|}\vv{x}_j-\vv{x}_i\phantom{|^3}}{|\vv{x}_j-\vv{x}_i|^3},
+\qquad i = 0,\dotsc,N-1.
+\end{equation}
+
+If you now consider entire galaxies, the number of planets is large, say
+$N\approx 1\,000\,000$. In order to solve this set of ODEs, you need to
+repeatedly evaluate $\nabla\varphi(\vv{x})$ at all planet locations
+$\vv{x}_i$. Each evaluation costs \bigO{N}, giving you a total cost of
+$\bigO{N^2}=\bigO{10^{12}}$. This cost is prohibitive, even for large super
+computers. The fast multipole method (FMM) allows you to evaluate
+\emph{approximations} of $\varphi(\vv{x})$ and its gradient and reduces this
+cost from \bigO{N^2} to \bigO{N}. This results in dramatic speed ups, and it 
+is this speed up alone that makes large scale simulations of galaxies possible.
+
+\section{Expansions}
+\subsection{Expansion of the Kernel Function}
+Let us denote by $k(\vv{x},\vv{y})\coloneqq |\vv{x}-\vv{y}|^{-1}$ the so-called
+\emph{kernel function}. Using this function, the gravimetric potential from
+equation~\eqref{eqn:gravimetric-potential} can more compactly be given as
+\begin{equation}\label{eqn:kgravimetric-potential}
+\varphi(\vv{x})=G\sum_{i=0}^{N-1}m_i k(\vv{x},\vv{x}_i).
+\end{equation}
+
+The key to fast multipole methods is that this kernel function can be
+\emph{expanded} in terms of the \emph{solid harmonics} as follows:
+\begin{equation}\label{eqn:kernel-expansion}
+k(\vv{x},\vv{y}) \approx
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n
+S_n^m(\vv{x})\overline{R_n^m(\vv{y})}
+\qquad\text{ whenever }|\vv{x}| > |\vv{y}|.
+\end{equation}
+The number $P\in\naturals$ is called the \emph{order} of the expansion.
+The functions $S_n^m:\wholespace \setminus \lbrace\vv{0}\rbrace\to\complex$ and
+$R_n^m:\wholespace\to\complex$ are respectively called the \emph{singular} and
+\emph{regular solid harmonics}. While these functions are complex-valued---the
+overline on $R_n^m$ denotes complex conjugation---the expansion always takes
+real values. We will define these functions precisely in following section. For
+now it suffices to remember that this expansion is very rapidly converging, it
+satisfies the following error-bound:\autocite[Theorem~3.2]{greengard1997}
+\begin{equation}
+\left|\,
+k(\vv{x},\vv{y}) - 
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n
+S_n^m(\vv{x})\overline{R_n^m(\vv{y})}
+\,\right|
+\leq \frac{1}{|\vv{x}|-|\vv{y}|}\left(\frac{|\vv{y}|}{|\vv{x}|}\right)^P.
+\end{equation}
+In other words, its accuracy exponentially increases with order $P$,
+additionally the approximation gets more accurate as $|\vv{x}|$ increases and
+$|\vv{y}|$ decreases.
+
+\subsection{Multipole Expansions (\PtoM)}
+We now again consider the gravimetric potential $\varphi$ as given in equation~%
+\eqref{eqn:kgravimetric-potential}. Furthermore assume the case where planets
+are clustered around some point $\vv{x}_A\in\wholespace$, and we would like to
+evaluate $\varphi$ at locations $\vv{x}$ that are far away from that cluster,
+i.\,e., $|\vv{x}-\vv{x}_A| > |\vv{x}_i-\vv{x}_A|$ for all $i=0,\dotsc,N-1$. We
+then have, by means of the kernel expansion~\eqref{eqn:kernel-expansion}:
+\begin{multline}
+\varphi(\vv{x})
+= \sum_{i=0}^{N-1}Gm_i k(\vv{x},\vv{x}_i)
+= \sum_{i=0}^{N-1}Gm_i k(\vv{x}-\vv{x}_A,\vv{x}_i-\vv{x}_A) \\
+\stackrel{\eqref{eqn:kernel-expansion}}{\approx}
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n
+S_n^m(\vv{x}-\vv{x}_A)
+\overline{\quad\underbrace{\sum_{i=0}^{N-1}R_n^m(\vv{x}_i-\vv{x}_A)Gm_i}_%
+{\eqqcolon M_n^m}\quad}.
+\end{multline}
+
+This suggests the following approach:
+\begin{enumerate}
+\item Compute the \emph{multipoles} $M_n^m\in\complex$:
+\begin{equation}\label{eqn:multipole-coefficients}
+M_n^m \coloneqq \sum_{i=1}^N Gm_iR_n^m(\vv{x}_i-\vv{x}_A).
+\end{equation}
+Cost: $\mathcal{O}(NP^2)$.
+\item Evaluate the \emph{multipole expansion} (or, if requested, its gradient)
+at the desired locations:
+\begin{equation}\label{eqn:multipole-expansion}
+\varphi(\vv{x})\approx
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n \overline{M_n^m}S_n^m(\vv{x}-\vv{x}_A)
+\qquad
+|\vv{x}-\vv{x}_A| > |\vv{x}_i-\vv{x}_A|, i=1\dotsc,N-1.
+\end{equation}
+Cost: \bigO{P^2} per evaluation point $\vv{x}$.
+\end{enumerate}
+
+If we only want to evaluate $\varphi$ at a single location $\vv{x}$, then
+nothing is gained. However, suppose you want to evaluate $\varphi$ at
+$M$ locations, where both $N,M\approx 1\,000\,000$. Then the cost for direct
+evaluation is $\bigO{NM}=\bigO{10^{12}}$, whereas the approach via the
+multipole expansion only costs $\bigO{NP^2 + MP^2}=\bigO{10^6P^2}$. This
+results in the aforementioned dramatic speed up, assuming that $P$ is not too
+large. In practice, choices up to $P=20$ are common---remember that the kernel
+expansion~\eqref{eqn:kernel-expansion} converges exponentially with $P$. Only
+very few calculations require even higher accuracies. Operation
+\eqref{eqn:multipole-coefficients} computes multipole coefficients $M_n^m$ from
+a given set of planets or particles; it is commonly called \textsc{p2m}:
+particle-to-multipole.
+
+In summary, a multipole expansion approximates the potential $\varphi$ of a
+particle cluster around some centre $\vv{x}_A$ \emph{outside of this cluster}.
+The expansion gets \emph{more accurate as the distance increases.} This is
+illustrated in \cref{fig:multipole-expansion}.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\fill [fill=white!30!black]
+(0,0) circle [radius=1.5cm];
+
+\draw (0,0) node [anchor=north west] {$\vv{x}_A$};
+\draw[mark=x,mark size=4,only marks] plot coordinates { (0,0) };
+
+\shade [shading=radial, inner color=black, outer color=white,even odd rule]
+  (0,0) circle [radius=3cm]
+  (0,0) circle [radius=1.5cm];
+
+\draw [very thick] (0,0) circle [radius=1.5cm];
+
+% Draw random planets
+\clip (0,0) circle [radius=1.5cm];
+\draw plot [mark=*,mark size=0.5,only marks,samples=50]
+( {random(-150,150)/100}, {random(-150,150)/100} );
+\end{tikzpicture}
+\caption{\label{fig:multipole-expansion}Multipole expansions converge outside
+of the smallest ball around their centre that contains all particles. Here, the
+cluster of planets near the centre $\vv{x}_A$ is contained within the drawn
+circle. Outside this region the expansion converges and gets more accurate as
+the distance increases, indicated by grey fading into white. The accuracy
+increases faster for expansions of higher order $P$. The expansion does not
+converge within the circle and gives large errors there, indicated by a dark
+grey colour.}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\fill [fill=white!30!black]
+  (-4,-3) rectangle (4,3) 
+  (0,0) circle [radius=2cm];
+
+\tikzfading[name=fade in,  inner color=transparent!100,
+                           outer color=transparent!0]
+\tikzfading[name=fade out, inner color=transparent!0,
+                           outer color=transparent!100]
+%\shade [outer color=white!50!black, inner color=white, path fading=fade in]
+%  (0,0) circle [radius=2cm];
+\fill [white!20!black, path fading=fade in]
+  (0,0) circle [radius=2cm];
+\fill [white, path fading=fade out]
+  (0,0) circle [radius=2cm];
+\fill [white, path fading=fade out]
+  (0,0) circle [radius=2cm];
+\fill [white, path fading=fade out]
+  (0,0) circle [radius=2cm];
+
+
+\draw plot [mark=x,only marks,mark size=4] (0,0);
+\draw (0,0) node [anchor=north west] {$\vv{x}_B$};
+\draw [very thick] (0,0) circle [radius=2cm];
+
+\clip (-4,-3) rectangle (4,3)
+      (0,0) circle [radius=2cm];
+
+\draw plot [mark=*,mark size=0.5,only marks,samples=500]
+( {random(-400,400)/100}, {random(-300,300)/100} );
+
+\end{tikzpicture}
+\caption{\label{fig:local-expansion}Local expansions converge in the largest
+ball around their centre that contains no particles. The error of a local
+expansion is zero at its centre~$\vv{x}_B$, indicated by a shade of white in
+this figure. It then gradually increases when approaching the boundary of the
+ball (white fading to grey). This increase is slower for expansions of higher
+order $P$. Outside of this ball, the local expansion does not converge and
+gives large errors (dark grey).}
+\end{figure}
+
+\subsection{Local Expansions (\PtoL)}
+Local expansions in some ways consider the opposite case, as illustrated in
+\cref{fig:local-expansion}. Here we want to evaluate $\varphi$ at a cluster of
+locations $\vv{x}$ around some centre $\vv{x}_B$, where the particles lie
+\emph{outside} of this cluster. In other words, we have $|\vv{x}-\vv{x}_B| <
+|\vv{x}_i-\vv{x}_B|$ for all $i=1,\dotsc,N-1$, and thus:
+\begin{multline}
+\varphi(\vv{x})
+= \sum_{i=0}^{N-1}Gm_i k(\vv{x},\vv{x}_i)
+= \sum_{i=0}^{N-1}Gm_i k(\vv{x}_i-\vv{x}_B,\vv{x}-\vv{x}_B) \\
+\stackrel{\eqref{eqn:kernel-expansion}}{\approx}
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n
+\overline{R_n^m(\vv{x}-\vv{x}_B)}
+\underbrace{\sum_{i=0}^{N-1}S_n^m(\vv{x}_i-\vv{x}_B)Gm_i}_{\eqqcolon L_n^m}.
+\end{multline}
+
+After computing the \emph{local coefficients} $L_n^m\in\complex$, the potential
+$\varphi$ can be approximated near $\vv{x}_B$ using the local expansion:
+\begin{equation}
+\varphi(\vv{x})\approx\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^{n}
+L_n^m\overline{R_n^m(\vv{x}-\vv{x}_B)}\qquad
+|\vv{x}-\vv{x}_B| < |\vv{x}_i-\vv{x}_B|,\ i=1,\dotsc,N-1.
+\end{equation}
+
+The operation of computing the local coefficients directly from the particles
+is called particle-to-local (\textsc{p2l}):
+\begin{equation}\label{eqn:p2l}
+L_n^m\coloneqq\sum_{i=0}^{N-1}S_n^m(\vv{x}_i-\vv{x}_B)Gm_i.
+\end{equation}
+However, most FMM implementations do not compute local coefficients via
+\textsc{p2l}; those that do only use it in rare circumstances. The usual way to
+obtain local coefficients is the so-called \textsc{m2l} translation and will be
+discussed later.
+
+\subsection{Remarks on the Derivation of Expansions}
+Key to all fast multipole methods is the availability of rapidly converging
+series expansions of the underlying kernel function $k(\vv{x},\vv{y})$, such
+as in \cref{eqn:kernel-expansion}. Generic expansions, such as Taylor series,
+can in principle be applied to any kind of kernel $k$. For example,
+the Taylor expansion of order $P$ of some kernel $k(\vv{x},\vv{y})$ for a fixed
+$\vv{x}$ around $\vv{y}=\vv{0}$ reads:
+\begin{equation}\label{eqn:taylor-expansion}
+k(\vv{x},\vv{y})\approx \sum_{|\vv{\alpha}|<P}\ 
+\underbrace{\partial_{\vv{y}}^{\vv{\alpha}}k(\vv{x},\vv{0})
+\vphantom{\frac{a}{b}}}_{\eqqcolon%
+\widetilde{S}_{\vv{\alpha}}(\vv{x})}
+\underbrace{\quad\frac{\vv{y}^{\vv{\alpha}}}{\vv{\alpha}!}\quad}_{\eqqcolon%
+\widetilde{R}_{\vv{\alpha}}(\vv{y})},
+\end{equation}
+where $\vv{\alpha}\in\naturals^3_0$ is a multi-index. The key point is that
+this expansion is a sum of products, where one factor only depends on
+$\vv{x}$ and the other factor only depends on $\vv{y}$. In this way the
+simultaneous dependence of $k$ on both $\vv{x}$ and $\vv{y}$ \emph{decouples}.
+
+The Taylor expansion consists of \bigO{P^3} terms, where the functions
+$\widetilde{S}_{\vv{\alpha}}$ and $\widetilde{R}_{\vv{\alpha}}$ take similar
+roles as the $S_n^m$ and $R_n^m$ in \cref{eqn:kernel-expansion}. Thus, assuming
+sufficient regularity of $k$, Taylor's theorem is all we need to to construct
+multipole and local expansions and it also provides us with error bounds.
+Without additional knowledge about $k$, this is essentially already the best we
+can do. However, also note that the Taylor expansion has \bigO{P^3} terms,
+while \cref{eqn:kernel-expansion} requires only \bigO{P^2}. Why is this so?
+
+With the particular choice $k(\vv{x},\vv{y})=|\vv{x}-\vv{y}|^{-1}$ and fixed
+$\vv{x}$, the Taylor polynomials~\eqref{eqn:taylor-expansion} are always
+\emph{harmonic}. In other words, the exact kernel function satisfies
+$-\Delta_{\vv{y}}k(\vv{x},\vv{y})=0$, where $-\Delta_{\vv{y}}$ is the Laplace
+operator with respect to the $\vv{y}$-variable. This property is inherited by
+the Taylor polynomials. There are only \bigO{P^2} linearly independent harmonic
+polynomials, so it suffices to use a basis for this \emph{sub}space. The regular
+solid harmonics $R_n^m$, $|m|\leq n$, are exactly that: they are a basis of the
+space of homogeneous harmonic polynomials of degree $n$. 
+Expansion~\eqref{eqn:kernel-expansion} achieves better compression because only
+basis functions for the proper subspace are used. The Taylor expansion~%
+\eqref{eqn:taylor-expansion}, on the other hand, uses the generic monomial
+basis for \emph{all} polynomials, not just the harmonic ones.
+
+Only for the particular kernel $k(\vv{x},\vv{y})=|\vv{x}-\vv{y}|^{-1}$ the
+solid harmonics are the correct choice. \solidfmm\ only considers this
+kernel function and the solid harmonics. For other kernel functions one can
+either use the more expensive, but more general Taylor
+expansion~\eqref{eqn:taylor-expansion}, or other generic $\bigO{P^3}$ approaches
+like Chebyshev interpolation. Alternatively, if performance is critical, it
+might be worthwhile to develop more efficient expansions specific to the
+particular kernel at hand.
+
+\section{Solid Harmonics}\label{sec:solidharmonics}
+The solid harmonics can be motivated and derived in many different ways. We
+refer the interested reader to the literature for this. Often they are given
+in spherical coordinates. When restricting the solid harmonics to the surface
+of the unit sphere, one obtains the more well-known \emph{spherical} harmonics
+$Y_n^m(\theta,\varphi)$, i.\,e., $Y_n^m(\theta,\varphi)=
+R_n^m(r=1,\theta,\varphi)$. This explains their name: unlike the spherical
+harmonics $Y_n^m$, the solid harmonics $S_n^m$ and $R_n^m$ are defined not only
+on the sphere's surface, but also on the volume it encloses, i.\,e., on the
+entire solid sphere. They are called \emph{harmonic} because
+$-\Delta S_n^m(\vv{x}) = 0$ for
+$\vv{x}\in\wholespace\setminus\lbrace\vv{0}\rbrace$ and
+$-\Delta R_n^m(\vv{x}) = 0$ for $\vv{x}\in\wholespace$. The functions $S_n^m$
+are called singular solid harmonics because of their singularities at
+$\vv{x}=\vv{0}$. The functions $R_n^m$ are polynomials, hence they are called
+regular solid harmonics.
+
+While spherical coordinates have certain benefits for analysis, these functions
+can more easily evaluated in Cartesian coordinates. There are countless
+conventions concerning signs and normalisations. \solidfmm\ follows the
+convention given by Dehnen.~\autocite{dehnen2014} For computational purposes,
+the solid harmonics are best defined recursively. Let
+$\vv{x}=(x,y,z)^\top\in\wholespace$ be given, and let
+$|\vv{x}|=\sqrt{x^2+y^2+z^2}$ denote its Euclidean length. Starting
+with $S_0^0(\vv{x})=|\vv{x}|^{-1}$ and $R_0^0(\vv{x})=1$, one continues with
+the diagonal $n=m$:
+\begin{equation}
+S_n^n = (2n-1)\frac{x+Iy}{|\vv{x}|^2}S_{n-1}^{n-1},\qquad
+R_n^n =       \frac{x+Iy}{2n}R_{n-1}^{n-1},
+\end{equation}
+where $I$ denotes the imaginary unit $I^2=-1$. For the remaining non-negative
+$m=0,\dotsc,n-1$, they can be computed via:
+\begin{equation}
+\begin{split}
+|\vv{x}|^2 S_n^m    &= (2n-1)zS_{n-1}^m-\bigl((n-1)^2-m^2\bigr)S_{n-2}^m,\\
+(n^2-m^2)R_n^m &= (2n-1)zR_{n-1}^m - |\vv{x}|^2R_{n-2}^m.
+\end{split}
+\end{equation}
+Here, it is implicitly assumed that $R_{n-2}^m=S_{n-2}^m=0$ whenever $m=n-1$.
+
+For the negative values of $m$, i.\,e., $m=-n,\dotsc,-1$, they are defined
+\emph{implicitly} via
+\begin{equation}\label{eqn:negativem}
+S_n^m(\vv{x}) = (-1)^m\overline{S_n^{-m}(\vv{x})}
+\quad\text{and}\quad
+R_n^m(\vv{x}) = (-1)^m\overline{R_n^{-m}(\vv{x})}.
+\end{equation}
+This property therefore also holds for the coefficients of the multipole and
+local expansions:
+\begin{equation}\label{eqn:negativemcoeffs}
+M_n^m = (-1)^m\overline{M_n^{-m}}
+\quad\text{and}\quad
+L_n^m = (-1)^m\overline{L_n^{-m}}.
+\end{equation}
+
+Thus, to even further increase compression, in a computer implementation
+neither the solid harmonics $R_n^m$ and $S_n^m$, nor the multipole and local
+coefficients $L_n^m$ and $M_n^m$ should be explicitly stored for negative $m$.
+Taking these symmetries into account, a local or multipole expansion
+of order $P$ consists of $P(P+1)/2$ complex numbers, which can be arranged
+in a triangular pattern as shown in \Cref{fig:triangle}.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\draw[->] (-0.25,4.5) -- (-0.25,0.5);
+\draw     (-0.5,2.5) node {$n$};
+\draw[->] (0.5,5.25) -- (4.5,5.25);
+\draw     (2.5,5.5) node {$m$};
+\foreach \n in {0,1,2,3,4}%
+{
+    \foreach \m in {0,...,\n}%
+    {
+        \draw[thick]  (\m,4-\n)   rectangle (\m+1,5-\n);
+        \draw (\m+0.5,4.5-\n) node [black,scale=0.9] {\Large$C_{\n}^{\m}$};
+    }
+}
+\end{tikzpicture}
+\caption{\label{fig:triangle}The coefficients $C_n^m\in\complex$,
+$C\in\lbrace S, R, M, L\rbrace$ of both multipole and local expansions, as well
+as the values of the solid harmonics $S_n^m$ and $R_n^m$ can be stored using
+$P(P+1)/2$ complex numbers. In this example we have $P=5$. They can be arranged
+in a triangular pattern according to their indices $n=0,\dotsc,4$ and
+$m=0,\dotsc,n$, where the values for negative $m$ are given implicitly by
+$C_n^{m}=(-1)^m\overline{C_n^{-m}}$.}
+\end{figure}
+
+
+At the same time, this property guarantees that the
+expansion~\eqref{eqn:kernel-expansion} always is real-valued: for $m=0$ we have
+$R_n^0\in\reals$ and $S_n^0\in\reals$. For $m\neq 0$ the imaginary parts for
+$\pm m$ cancel each other out:
+\begin{multline}
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n S_n^m\overline{R_n^m} 
+=
+\sum_{n=0}^{P-1}S_n^0 R_n^0 +
+\sum_{n=0}^{P-1}\sum_{m=1\vphantom{0}}^n \biggl(S_n^m\overline{R_n^m}+
+S_n^{-m}\overline{R_n^{-m}}\biggr)\\
+\stackrel{\eqref{eqn:negativem}}{=}
+\sum_{n=0}^{P-1}\underbrace{S_n^0R_n^0}_{\in\reals} +
+\sum_{n=0}^{P-1}\sum_{m=1\vphantom{0}}^n
+\underbrace{\biggl(S_n^m\overline{R_n^m}+
+\overline{S_n^m}R_n^m\biggr)}_{\in\reals}.
+\end{multline}
+
+
+
+\section{Translations}
+Translation operators take in one expansion around centre $\vv{x}_A$ and produce
+another around some centre $\vv{x}_B$. When both in- and output expansions are
+of the same order $P$, the translation operators map \bigO{P^2} input 
+coefficients to \bigO{P^2} output coefficients at the cost of \bigO{P^4}
+arithmetic operations. The so-called \MtoL-translation is particularly
+important for FMMs, and a significant portion of the computational time is
+spent on performing these translations. They are the main reason for the
+existence of this library: it provides highly efficient, vectorised 
+implementations of the translation operators. Additionally, \solidfmm's
+implementation is based on the approach outlined by
+Dehnen,\autocite{dehnen2014} which reduces the complexity from \bigO{P^4} to
+\bigO{P^3} in theory and even \bigO{P^2} in practice.
+
+\subsection{Multipole-to-Multipole (\MtoM)}
+\MtoM\ may be interpreted just like \PtoM, with the difference that the input
+is not a planet with mass $m_i$ at location $\vv{x}_i$, but a multipole
+expansion of order $P_i$ with coefficients $M_{n,i}^m$ and centre
+$\vv{x}_i$. Thus, in \MtoM, both the input and output are multipole expansions.
+We again denote by $\vv{x}_A$ and $P$ the centre and order of the output
+expansion. We furthermore introduce the \emph{shift vector} $\vv{r}=
+\vv{x}_A-\vv{x}_i$, pointing from the old to the new expansion centre.
+
+Instead of expanding the kernel $k(\vv{x},\vv{y})=S_0^0(\vv{x}-\vv{y})$, we
+now expand the singular solid harmonics $S_n^m(\vv{x}-\vv{y})$, analogously to
+expansion~\eqref{eqn:kernel-expansion}:\autocite[Equation~(49)]{dehnen2014}
+\begin{equation}\label{eqn:Sexpansion}
+S_n^m(\vv{x}-\vv{y}) = \sum_{k=0}^{\infty}\sum_{l=-k\vphantom{0}}^{k}
+S_{n+k}^{m+l}(\vv{x})\overline{R_k^l(\vv{y})}\qquad |\vv{x}| > |\vv{y}|.
+\end{equation}
+Thus, whenever $|\vv{x}-\vv{x}_A| > |\vv{x}_i-\vv{x}_A|$, the input multipole
+expansion with centre $\vv{x}_i$ can itself be expanded around $\vv{x}_A$ as
+follows:
+\begin{multline}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\overline{M_{n,i}^m}S_n^m(\vv{x}-\vv{x}_i) \\
+=
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\overline{M_{n,i}^m}S_n^m\bigl((\vv{x}-\vv{x}_A)-(\vv{x}_i-\vv{x}_A)\bigr) \\
+\stackrel{\eqref{eqn:Sexpansion}}{=}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\sum_{k=0}^{\infty}\sum_{l=-k\vphantom{0}}^{k}
+\overline{M_{n,i}^mR_k^l(-\vv{r})}S_{n+k}^{m+l}(\vv{x}-\vv{x}_A).
+\end{multline}
+All that remains is a change of indices and rearranging the sums. To simplify
+the summation limits, we will implicitly assume that we have $R_{n-k}^{m-l}
+(-\vv{r})=0$ whenever $|m-l| > n-k$ or $n-k<0$. This finally results in:
+\begin{multline}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\overline{M_{n,i}^m}S_n^m(\vv{x}-\vv{x}_i) \\
+=
+\sum_{n=0}^{\infty}\sum_{m=-n\vphantom{0}}^{n}
+S_{n}^{m}(\vv{x}-\vv{x}_A)
+\left(
+\sum_{k=0}^{P_i-1}\sum_{l=-k}^{k}
+\overline{M_{k,i}^{l}R_{n-k}^{m-l}(-\vv{r})}
+\right).
+\end{multline}
+We may thus define the new multipoles $M_n^m$ via:
+\begin{equation}\label{eqn:fullm2l}
+M_n^m \coloneqq \sum_{k=0}^{P_i-1} \sum_{l=-n}^{n}
+M_{k,i}^lR_{n-k}^{m-l}(-\vv{r}).
+\end{equation}
+This is the general \MtoM-translation formula. We then have, after truncating
+at the given output order $P$:
+\begin{equation}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\overline{M_{n,i}^m}S_n^m(\vv{x}-\vv{x}_i) 
+\approx
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^{n}
+\overline{M_n^m}S_n^m(\vv{x}-\vv{x}_A)
+\qquad |\vv{x}-\vv{x}_A| > |\vv{x}_i-\vv{x}_A|.
+\end{equation}
+
+While \PtoM\ allows us to combine several \enquote{particles} or
+\enquote{planets} into a single multipole expansion with centre $\vv{x}_A$,
+\MtoM\ allows us to combine several multipole expansions into one. Suppose we
+were given $N$ multipole expansions with centres $\vv{x}_i$ and orders $P_i$,
+$i=0,\dotsc,N-1$. The potential approximated by these expansions:
+\begin{equation}\label{eqn:m2m-originalphi}
+\varphi(\vv{x})\approx
+\sum_{i=0}^{N-1}\sum_{n=0}^{P_i-1}\sum_{\vphantom{0}m=-n}^{n}
+\overline{M_{n,i}^m}S_n^m(\vv{x}-\vv{x}_i)
+\end{equation}
+can then in turn be approximated as follows:
+\begin{enumerate}
+\item Compute the combined multipole moments around $\vv{x}_A$ using
+\MtoM:
+\begin{equation}
+M_n^m 
+\stackrel{\eqref{eqn:fullm2l}}{=}
+\sum_{i=0}^{N-1}\sum_{k=0}^{P_i-1}\sum_{l=-k}^{k}
+M_{k,i}^lR_{n-k}^{m-l}(\vv{x}_i-\vv{x}_A).
+\end{equation}
+Cost, assuming $P_i=P$ for all $i=0,\dotsc,N-1$: \bigO{NP^4}. \solidfmm\ reduces
+this cost to \bigO{NP^3} for large $P$. For all practically relevant choices
+of $P$, however, the empirically measured timings behave even better, namely
+optimally as~\bigO{NP^2}.
+\item Evaluate the new expansion at the desired output locations:
+\begin{equation}
+\varphi(\vv{x}) \approx \sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n
+\overline{M_n^m}S_n^m(\vv{x}-\vv{x}_A).
+\end{equation}
+Cost: \bigO{P^2} per evaluation point $\vv{x}$.
+\end{enumerate}
+
+The resulting approximation now contains \emph{two sources of error}:
+\begin{enumerate}
+\item The error of the original approximation~\eqref{eqn:m2m-originalphi}.
+\item The error from the \MtoM\ translation.
+\end{enumerate}
+The additional error behaves just like the error for an individual expansion 
+obtained via \PtoM. In particular, \cref{fig:multipole-expansion} also
+describes this additional error and area of convergence, where the
+\enquote{dots} in this figure now correspond to the multipole expansions
+$M_{n,i}^m$ and their centres $\vv{x}_i$.
+
+
+\subsection{Multipole-to-Local (\MtoL)}
+\MtoL\ is to \PtoL\ what \MtoM\ is to \PtoM: we can again treat a given
+multipole expansion just like a planet or particle. While \PtoL\ allows
+us to locally approximate the potential induced by several planets, \MtoL\
+allows us to approximate the potential given by multipole expansions. Thus,
+suppose we were given a multipole expansion with coefficients $M_{n,i}^m$ and
+order $P_i$ around some centre $\vv{x}_i$. We now wish to locally approximate
+this expansion near $\vv{x}_B$ using a local expansion. Again, we denote
+by $\vv{r}=\vv{x}_B-\vv{x}_i$ the \emph{shift vector}, pointing from the old to
+the new expansion centre.
+
+We will make use of the fact that we can flip signs via $S_n^m(-\vv{x}) =
+(-1)^nS_n^m(\vv{x})$. For $|\vv{x}-\vv{x}_B| < |\vv{x}-\vv{x}_i|$ we then have:
+\begin{multline}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n%
+\overline{M_{n,i}^m}S_n^m(\vv{x}-\vv{x}_i) \\
+= 
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n%
+\overline{M_{n,i}^m}S_n^m\left((\vv{x}-\vv{x}_B)-(\vv{x}_i-\vv{x}_B)\right) \\
+\stackrel{\text{sign flip}}{=}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n(-1)^n
+\overline{M_{n,i}^m}S_n^m\left((\vv{x}_i-\vv{x}_B)-(\vv{x}-\vv{x}_B)\right) \\
+\stackrel{\eqref{eqn:Sexpansion}}{=}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\sum_{k=0}^{\infty}\sum_{l=-k\vphantom{0}}^{k}(-1)^n
+\overline{M_{n,i}^m}S_{n+k}^{m+l}(-\vv{r})\overline{R_k^l(\vv{x}-\vv{x}_B)} \\
+\stackrel{\text{sign flip}}{=}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^{n}
+\sum_{k=0}^{\infty}\sum_{l=-k\vphantom{0}}^{k}(-1)^k
+\overline{M_{n,i}^m}S_{n+k}^{m+l}(\vv{r})\overline{R_k^l(\vv{x}-\vv{x}_B)}.
+\end{multline}
+It again remains to rearrange the sums and change the indices to obtain:
+\begin{multline}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n%
+\overline{M_{n,i}^m}S_n^m(\vv{x}-\vv{x}_i) \\
+=
+\sum_{n=0}^\infty\sum_{m=-n\vphantom{0}}^n
+\overline{R_n^m(\vv{x}-\vv{x}_B)}
+\left(
+(-1)^n
+\sum_{k=0}^{P_i-1}\sum_{l=-k\vphantom{0}}^{k}
+\overline{M_{k,i}^l}S_{n+k}^{m+l}(\vv{r})
+\right).
+\end{multline}
+Thus, the general \MtoL-translation formula is as follows:
+\begin{equation}
+L_n^m\coloneqq (-1)^n
+\sum_{k=0}^{P_i-1}\sum_{l=-k\vphantom{0}}^{k}
+\overline{M_{k,i}^l}S_{n+k}^{m+l}(\vv{r}).
+\end{equation}
+After truncating at the output order $P$, the resulting local expansion then
+approximates the original multipole expansion near $\vv{x}_B$:
+\begin{equation}
+\sum_{n=0}^{P_i-1}\sum_{\vphantom{0}m=-n}^n
+\overline{M_n^m}S_n^m(\vv{x}-\vv{x}_i)
+\approx
+\sum_{n=0}^{P-1}\sum_{\vphantom{0}m=-n}^n
+L_n^m\overline{R_n^m(\vv{x}-\vv{x}_B)}
+\qquad |\vv{x}-\vv{x}_B| < |\vv{x}_i-\vv{x}_B|.
+\end{equation}
+
+The remarks on the error of \MtoM\ analogously carry over to \MtoL. Several
+multipole expansions can be combined into a single local expansion. There
+are then two sources of error: the error from the original expansions plus
+the error from \MtoL. The second error contribution behaves just like in
+\cref{fig:local-expansion}: it is zero at $\vv{x}_B$, and then gradually
+increases as one approaches the perimeter of the largest sphere around
+$\vv{x}_B$ that contains none of the $\vv{x}_i$.
+
+\subsection{Local-to-Local (\LtoL)}
+\LtoL\ differs from the previous translation operators in that it does not make
+sense to choose the output's order $P$ higher than that of the input expansion~%
+$P_i$. In \LtoL, the input is a local expansion of order $P_i$, i.\,e., a
+harmonic polynomial of total degree less than $P_i$. The space of harmonic
+polynomials is invariant under translation, i.\,e., polynomials can be
+translated exactly. Thus, when $P=P_i$, \LtoL\ is an error-free operation.
+Errors are only introduced when $P<P_i$, in which case they are zero at the new
+expansion centre $\vv{x}_B$ and gradually increase from there.
+
+The derivation is similar to that of \MtoM\ and \MtoL. We begin by expanding
+the regular solid harmonics:\autocite[Equation~(48)]{dehnen2014}
+\begin{equation}\label{eqn:Rexpansion}
+R_n^m(\vv{x}-\vv{y}) =
+\sum_{k=0}^n\sum_{l=-k}^k R_{k}^{l}(\vv{x})R_{n-k}^{m-l}(-\vv{y})
+\qquad
+(\text{exact for any $\vv{x},\vv{y}\in\wholespace$}).
+\end{equation}
+Here, to simplify notation, we again implicitly assume that $R_n^m=0$ whenever
+$|m| > n$.
+
+Thus, for a given input expansion $L_{n,i}^m$ around $\vv{x}_i$ and of order
+$P_i$, and shift vector $\vv{r}=\vv{x}_B-\vv{x}_i$, one obtains:
+\begin{multline}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n
+L_{n,i}^m\overline{R_n^m(\vv{x}-\vv{x}_i)}
+=
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n
+L_{n,i}^m\overline{R_n^m\bigl((\vv{x}-\vv{x}_B)-(\vv{x}_i-\vv{x}_B)\bigr)} \\
+\stackrel{\eqref{eqn:Rexpansion}}{=}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n\sum_{k=0}^n\sum_{l=-k}^kL_{n,i}^m
+\overline{R_{k}^{l}(\vv{x}-\vv{x}_B)R_{n-k}^{m-l}(\vv{r})} \\
+\stackrel{\text{rearranging}}{=}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n \overline{R_n^m(\vv{x}-\vv{x}_B)}
+\left(
+\sum_{k=n}^{P_i-1}\sum_{l=-k}^k
+L_{k,i}^l\overline{R_{k-n}^{l-m}(\vv{r})}
+\right).
+\end{multline}
+Thus, we may define new local moments via:
+\begin{equation}
+L_n^m =\sum_{k=n}^{P_i-1}\sum_{l=-k}^k L_{k,i}^l\overline{R_{k-n}^{l-m}(\vv{r})}
+\end{equation}
+resulting in
+\begin{equation}
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n
+L_{n,i}^m\overline{R_n^m(\vv{x}-\vv{x}_i)}
+=
+\sum_{n=0}^{P_i-1}\sum_{m=-n\vphantom{0}}^n
+L_{n}^m\overline{R_n^m(\vv{x}-\vv{x}_B)}
+\qquad\text{exactly}.
+\end{equation}
+The output expansion may be truncated ($P<P_i$). Choosing $(P>P_i)$ will only
+result in adding zero coefficients $L_n^m=0$ for $n\geq P_i$.
+
+\subsection{Summary of the Translation Formulæ}\label{sec:translationsummary}
+All of the translation operators take an input expansion of order $P_i$ around
+some centre $\vv{x}_i$ and produce a new expansion of order $P$ around centre
+$\vv{x}_i+\vv{r}$, where $\vv{r}$ is the so-called \emph{shift vector}.
+Depending on the type of translation, the output expansion may coincide with
+the input expansion, or just be an approximation of it. The formulæ for
+computing the output coefficients are as follows.
+\begin{itemize}
+\item[\MtoM:]
+\begin{equation}
+M_n^m = \sum_{k=0}^{P_i-1} \sum_{l=-n}^{n}
+M_{k,i}^lR_{n-k}^{m-l}(-\vv{r}).
+\end{equation}
+\item[\MtoL:]
+\begin{equation}
+L_n^m = (-1)^n
+\sum_{k=0}^{P_i-1}\sum_{l=-k}^{k}
+\overline{M_{k,i}^l}S_{n+k}^{m+l}(\vv{r}).
+\end{equation}
+\item[\LtoL:]
+\begin{equation}
+L_n^m = \sum_{k=n}^{P_i-1}\sum_{l=-k}^k
+L_{k,i}^l\overline{R_{k-n}^{l-m}(\vv{r})}.
+\end{equation}
+\end{itemize}
+In these sums it is implicitly assumed that $R_n^m=0$ whenever $n<0$ or
+$|m| > n$. When in- and output order $P=P_i$ coincide, computing all output
+coefficients using these forumulæ costs \bigO{P^4}. \solidfmm\ uses acceleration
+techniques to reduce this cost to \bigO{P^3} in theory, but measurements have
+shown that in practice it performs even better as \bigO{P^2}.
+
+\section{Outlook}
+The concepts described in this chapter form the main building blocks of
+fast multipole methods. With the mathematical background presented here, it
+should be possible to understand the library functionality described in
+\cref{chp:quickstart}. At the moment, \solidfmm\ does not provide a full
+implementation of the fast multipole method, but only an efficient, optimised
+implementation of these building blocks. This is intentional, so that the
+library remains slim can be used in existing implementations of the FMM. For
+this reason we do not give a full description of the algorithm, of which there
+exist many variations.
+
+The original FMM is due to Greengard and Rokhlin.\autocite{greengard1987}
+Since then the algorithm has developed into more simple, adaptive,
+parallelisable variants. A description of the \enquote{dual tree traversal}
+by Dehnen\autocite{dehnen2002} and a comparison to other variants was given by
+Yokota.\autocite{yokota2013b} We find this version of the FMM particularly
+intuitive. He also compares different series expansions and mentions the lack
+of efficient implementations for the solid harmonics, even though they are
+the most efficient expansions available for the important kernel function
+$k(\vv{x},\vv{y})=|\vv{x}-\vv{y}|^{-1}$. \solidfmm's aim is to provide such an
+implementation.
+
+
+
+\chapter{User Reference}\label{chp:userreference}
+This chapter considers \solidfmm's API for users. The implementation details
+are covered in \cref{part:developer} of this book. All components of the library
+are in the \solidfmm\ namespace. For brevity, we will omit the explicitly
+stating namespace in the discussion that follows. For example we will simply
+write \lstinline|solid| instead of \lstinline|solidfmm::solid|.
+
+\section{Overview}
+\solidfmm\ exposes its interface through four header files, each of which
+will be described in a separate section below:
+\begin{itemize}
+\item \lstinline|solidfmm/solid.hpp| Contains the \lstinline|solid| data
+structure for storing the coefficients of expansions and values of the
+solid harmonics. Also contains the \lstinline|dot| and \lstinline|fmadd|
+operations.
+\item \lstinline|solidfmm/harmonics.hpp| Evaluation of the solid harmonics
+and their gradients.
+\item \lstinline|solidfmm/handles.hpp| Handle classes for creating buffers
+and shared data which are needed for the translation operations.
+\item \lstinline|solidfmm/translations.hpp| The actual translation operations.
+\end{itemize}
+
+Most operations are templates and take a type parameter which is commonly
+called \lstinline|real|. This type specifies which fundamental arithmetic
+type should be used to represent a real number. \solidfmm\ supports single and
+double precision, i.\,e., \lstinline|float| and \lstinline|double| for this
+parameter. It is illegal to use other types for \lstinline|real|.
+
+\section{\texttt{solidfmm/solid.hpp}}
+Objects of type \lstinline|solid| are used to store the coefficients of both
+local and multipole expansions. Additionally, when evaluating the solid
+harmonics $S_n^m(\vv{x})$ and $R_n^m(\vv{x})$ at some given point
+$\vv{x}\in\wholespace$, the resulting values are also stored in objects of this
+type. Instances can either hold scalar or vector-valued data. For example, the
+solid harmonics $S_n^m(\vv{x}), R_n^m(\vv{x})\in\complex$ are scalars. Their
+gradients are vector-valued: $\nabla S_n^m(\vv{x}), \nabla
+R_n^m(\vv{x})\in\complex^3$. For these reason most operations additionally take
+a parameter called \lstinline|dim|, which, however, can be omitted when working
+with scalars. Similarly, it is possible to use vector-valued multipole and local
+expansions.
+
+\begin{cppcode}{Public interface of the \lstinline|solid| class.}
+template <typename real>
+class solid
+{
+public:
+    solid() = default;
+    solid( size_t P, size_t dim = 1 );
+    solid( const solid  &rhs );
+    solid(       solid &&rhs ) noexcept;
+    solid& operator=( const solid  &rhs );
+    solid& operator=(       solid &&rhs ) noexcept;
+   ~solid();
+
+    void resize( size_t P, size_t dim = 1 );
+    void reinit( size_t P, size_t dim = 1 );
+    void zeros() noexcept;
+
+    const real& re( size_t n, size_t m, size_t d = 0 ) const noexcept;
+          real& re( size_t n, size_t m, size_t d = 0 )       noexcept;
+    const real& im( size_t n, size_t m, size_t d = 0 ) const noexcept;
+          real& im( size_t n, size_t m, size_t d = 0 )       noexcept;
+
+    size_t order    () const noexcept;
+    size_t dimension() const noexcept;
+
+    const real*  memptr() const noexcept;
+          real*  memptr()       noexcept;
+
+private:
+	// …
+};
+\end{cppcode}
+
+\subsection{Construction and Resizing}
+The default constructor creates instances of order $P=0$, i.\,e., empty objects
+which do not contain any coefficients or values. When creating a fresh object
+using the second constructor, or when calling \lstinline|reinit| with the
+desired order and dimension, one obtains a \lstinline|solidfmm::solid|
+containing only zero values. Calling the member \lstinline|resize|, on the
+other hand, will result in object of the desired order and dimension, but with
+\emph{undefined} contents. \lstinline|zeros| can be used to set all members to
+zero. Thus, \lstinline|reinit| is equivalent to calling \lstinline|resize| and
+\lstinline|zeros| immediately afterwards. The copy and move constructors, as
+well as the assignment operators have the usual semantics. All these operations
+either come with a no-throw guarantee, or the strong exception guarantee.
+In particular, functions like \lstinline|resize| can only throw exceptions of
+type \lstinline|std::bad_alloc|, but in case they do, they leave the object
+unchanged.
+
+\subsection{Accessing Elements}
+The contents of a \lstinline|solid| can be accessed using the member functions
+\lstinline|re| and \lstinline|im|, which respectively return the real and
+imaginary parts of the specified element.
+\begin{cppcode*}
+solid<double> M; // Given multipole coefficients, initialised somewhere else.
+
+double a = M.re(4,2);
+M.im(2,1) = 42;
+\end{cppcode*}
+Under the assumption that \lstinline|M.order() > 4|, this code stores the value
+of $\Re M_4^2$ in the variable \lstinline|a| and assigns the value~42 to
+$\Im M_2^1$. For vector-valued a \lstinline|solid|, the above code would access
+the zeroth component of the respective vectors; dimensions are counted
+beginning with zero. For example, to access the \enquote{y-component} of the
+real part of some $\vv{M}_4^2\in\complex^3$, one would instead use:
+\begin{cppcode*}
+double a = M.re(4,2,1);
+\end{cppcode*}
+
+The indices $n$, $m$, and $d$ (default value $d=0$) must be valid. No range
+checks are performed; passing invalid arguments will result in undefined
+behaviour. As discussed in \cref{sec:solidharmonics}, it is not necessary to
+store the values of $M_n^m$ for the negative values of $m$, as they are given
+implicitly. For this reason, for a given \lstinline|solid| of order $P$ and
+dimension $\mathrm{D}$, the valid range of parameters is $0\leq n < P$,
+$0\leq m\leq n$, and $0\leq d < \mathrm{D}$.
+
+\subsection{Direct Memory Access}
+The member function \lstinline|memptr()| gives direct memory access to the
+data that a \lstinline|solid| is holding. The indexing scheme is best
+illustrated graphically, see \cref{fig:solidmemorylayout}. Assume we were given
+a \lstinline|solid| of order $P$ and dimension $\mathrm{D}$. Then the real
+and imaginary parts of the $d$th vector-component of some
+$\vv{M}_n^m\in\complex^{\mathrm{D}}$, $0\leq n < P$, $0\leq m\leq n$,
+$0\leq d<\mathrm{D}$ can be accessed via:
+\begin{cppcode*}
+double real_part = M.memptr()[ d*P*(P+1) + (n  )*(n+1) + m ];
+double imag_part = M.memptr()[ d*P*(P+1) + (n+1)*(n+1) + m ];
+\end{cppcode*}
+
+Don't even think about calling \lstinline|delete|, \lstinline|delete []|,
+\lstinline|free()|, \lstinline|realloc()|, or the like on this 
+pointer---unless, of course, you are keen on causing undefined behaviour and
+crashing your programme.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\draw[->] (-0.25,4.5) -- (-0.25,0.5);
+\draw     (-0.5,2.5) node {$n$};
+\draw[->] (0.5,5.25) -- (4.5,5.25);
+\draw     (2.5,5.5) node {$m$};
+\foreach \n in {0,1,2,3,4}%
+{
+    \foreach \m in {0,...,\n}%
+    {
+        \fill[gray]   (\m,4-\n)   rectangle (\m+1,4.5-\n);
+        \fill[white]  (\m,4.5-\n) rectangle (\m+1,5-\n);
+        \draw[thick]  (\m,4-\n)   rectangle (\m+1,5-\n);
+        \draw (\m+0.3,4.5-\n) node [black,scale=0.9] {\Large$C_{\n}^{\m}$};
+
+        \tikzmath{ integer \reidx;
+                   integer \imidx;
+                   \reidx = (\n  ) * (\n+1) + \m;
+                   \imidx = (\n+1) * (\n+1) + \m; };
+        \draw (\m+0.75,4.80-\n) node [scale=0.8] {\texttt{\reidx}};
+        \draw (\m+0.75,4.20-\n) node [scale=0.8] {\texttt{\imidx}};
+    }
+}
+\draw (2,-0.5) node {$\texttt{pos}\bigr(\Re(C_n^m)\bigr)= (n+0)(n+1) + m,$};
+\draw (2,-1.0) node {$\texttt{pos}\bigl(\Im(C_n^m)\bigr)\,= (n+1)(n+1) + m.$};
+\draw (5.5,4.5) node[left,align=left] {Real parts\\Imaginary parts};
+\filldraw[fill=white] (2,4.64) rectangle +(0.2,0.2);
+\filldraw[fill=gray]  (2,4.22) rectangle +(0.2,0.2);
+\end{tikzpicture}
+\caption{\label{fig:solidmemorylayout}A generic \lstinline|solid| $C$ may
+contain coefficients of local or multipole expansions, as well as the values of
+regular or singular harmonics. The memory layout of a \emph{scalar}
+\lstinline|solid| of order~5 is illustrated above. Only the values $C_n^m$ for
+$m\geq 0$ need to be stored, as the values for negative $m$ are given
+implicitly. The array position \lstinline|pos| of the respective values is
+indicated by the numbers in the upper and lower right corners of the boxes. A
+vector-valued \lstinline|solid| first stores all values for dimension $d=0$ as
+shown above. Then all elements for dimension $d=1$ follow using the same
+layout, then those of dimension $d=2$, and so forth.}
+\end{figure}
+
+\subsection{Evaluating Expansions using \texttt{dot}}
+Consider the task of evaluating a given multipole expansion around some centre
+$\vv{x}_A$:
+\begin{equation}
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n\overline{M_n^m}S_n^m(\vv{x}-\vv{x}_A)
+\end{equation}
+as discussed in \cref{chp:mathbackground}. This operation is essentially the
+dot-product on two complex-valued vectors $M,S\in\mathbb{C}^{P^2}$ which are
+indexed in a non-standard way. Additionally, as discussed before, this sum
+always takes real values, so the roles of $M$ and $S$ can be swapped without
+changing the result. For this reason, \solidfmm\ implements such
+operations using the function \lstinline|dot|.
+\begin{cppcode*}
+void dot( const solid<float>  &A, const solid<float>  &B, float  *result ) noexcept;
+void dot( const solid<double> &A, const solid<double> &B, double *result ) noexcept;
+\end{cppcode*}
+
+This function supports inputs of differing orders and dimensions, i.\,e.,
+it is legal to have \lstinline|A.order() != B.order()| and
+\lstinline|A.dimension() != B.dimension()|. The semantics of these cases are
+as follows.
+
+\begin{enumerate}
+\item In case we have \lstinline|A.order() != B.order()|, the \lstinline|solid|
+of lower order is padded with zeros to match the other \lstinline|solid|'s
+order.
+\item In case we have \lstinline|A.dimension()!=1| or
+\lstinline|B.dimension()!=1|, all combinations of components are dotted
+together, i.\,e., the result is a matrix of dimension
+\begin{equation*}
+\texttt{A.dimension()} \times \texttt{B.dimension()}
+\end{equation*}
+that is stored in row-major order. The entry at position $(i,j)$ then contains
+the value
+\begin{equation*}
+\sum_{n=0}^{P-1}\sum_{m=-n\vphantom{0}}^n\overline{A_{n,i}^m}B_{n,\,j}^m.
+\end{equation*}
+If you prefer column-major order, you can just swap \lstinline|A| and
+\lstinline|B| when calling \lstinline|dot|.
+\end{enumerate}
+For this reason, \lstinline|dot| does not simply return a floating point value,
+but takes a pointer to the first element where the result should be stored. It
+is the duty of the user to ensure that these pointers point to a region of
+memory which is sufficiently large to store the result.
+
+Assume you were given a vector-valued local expansion of order $P$ with
+coefficients $\vv{L}_n^m\in\complex^3$ around expansion centre $\vv{x}_B=
+(\mathtt{xB},\mathtt{yB},\mathtt{zB})^\top\in\reals^3$. To evaluate this
+expansion at some location 
+$\vv{x}=(\mathtt{x},\mathtt{y},\mathtt{z})^\top\in\reals^3$, you would use
+the following code:
+\begin{cppcode*}
+double result[3];
+dot( L, harmonics::R<double>(P,x-xB,y-yB,z-zB), result ); 
+\end{cppcode*}
+To evaluate its derivative, i.\,e., its Jacobian matrix of dimension
+$\reals^{3\times 3}$, you would then use the following code and 
+replace the regular harmonics \lstinline|R| with their gradients \lstinline|dR|:
+\begin{cppcode*}
+double jacobian[9];
+dot( L, harmonics::dR<double>(P,x-xB,y-yB,z-zB), jacobian );
+\end{cppcode*}
+Note that calling \lstinline|harmonics::R| or \lstinline|harmonics::dR| requires
+you to \lstinline[style=cpp]|#include| the \lstinline|solidfmm/harmonics.hpp|
+header, which is described in \cref{sec:harmonicshpp}.
+
+\subsection{Creating Expansions using \texttt{fmadd}}
+We recall the \PtoM\ and \PtoL\ operations from \cref{chp:mathbackground}.
+Given a set of \enquote{particles} with location $\vv{x}_i$ and mass $m_i$,
+$i=0,\dotsc,N-1$, we desire to compute multipole or local
+expansions around respective centres $\vv{x}_A$ and $\vv{x}_B$:
+\begin{equation}
+M_n^m = \sum_{i=0}^{N-1}m_i R_n^m(\vv{x}-\vv{x}_A),\qquad
+L_n^m = \sum_{i=0}^{N-1}m_i S_n^m(\vv{x}-\vv{x}_B).
+\end{equation}
+This operation thus always takes multiples of a \lstinline|solid| containing the
+values of the regular or singular harmonics, and accumulates them into a
+\lstinline|solid| that contains the expansion coefficients. There also is
+support for vector-valued expansions:
+\begin{cppcode*}
+void fmadd( const float   fac, const solid<float > &A, solid<float > &B );
+void fmadd( const float  *fac, const solid<float > &A, solid<float > &B );
+void fmadd( const double  fac, const solid<double> &A, solid<double> &B );
+void fmadd( const double *fac, const solid<double> &A, solid<double> &B );
+\end{cppcode*}
+
+In all of these operations one must have both \lstinline|A.dimension() == B.dimension()| and \lstinline|A.order() == B.order()|, because it is not
+clear how to meaningfully define those operations otherwise. These functions
+throw exceptions of type \lstinline|std::logic_error| if one of these conditions
+is violated. Again, the strong exception guarantee is given: in case an
+exception is thrown, the function's arguments are not changed.
+
+The functions taking a \emph{value} \lstinline|fac| essentially perform
+\lstinline|B += fac*A|; but note that \solidfmm\ does not implement
+\lstinline|operator+=|. The operations taking a \emph{pointer} \lstinline|fac|
+assume that it points to an array of size \lstinline|A.dimension() == B.dimension()|; the $d$'th component is then scaled by \lstinline|fac[d]|.
+
+We are still not sure how to devise a more flexible interface, we are open
+for suggestions!
+
+
+\section{\texttt{solidfmm/harmonics.hpp}}\label{sec:harmonicshpp}
+This header contains the function declations for evaluating the regular and
+singular harmonics, as well as their gradients, as they are defined in
+\cref{sec:solidharmonics}. The interface should be pretty self-explanatory:
+\begin{cppcode*}
+namespace harmonics
+{
+
+template <typename real> solid<real>  R( size_t P, real x, real y, real z );
+template <typename real> solid<real>  S( size_t P, real x, real y, real z );
+template <typename real> solid<real> dR( size_t P, real x, real y, real z );
+template <typename real> solid<real> dS( size_t P, real x, real y, real z );
+
+}
+\end{cppcode*}
+
+The parameter \lstinline|P| specifies the order up to which you wish to evaluate
+the harmonics. The parameters \lstinline|x|,\lstinline|y|, and \lstinline|z| are
+the respective components of the position vector $\vv{x}=(\mathtt{x},\mathtt{y},\mathtt{z})^\top\in\wholespace$ at which
+you want to evaluate the harmonic functions. Only \lstinline[style=cpp]|double|
+and \lstinline[style=cpp]|float| are supported for the template parameter
+\lstinline|real|. These functions may throw exceptions of type
+\lstinline|std::bad_alloc|.
+
+\section{\texttt{solidfmm/handles.hpp}}\label{sec:handles}
+The handle classes encapsulate resources that are implementation details but
+are needed to carry out the translation operations \MtoM, \MtoL, and \LtoL.
+There are two kinds of handles:
+\begin{enumerate}
+\item \lstinline|operator_handle|. Only one of these handles is needed, it
+can and \emph{should be shared} among threads. It is a wrapper to the an
+implementation detail, which essentially stores the so-called Wigner matrices,
+which are needed for the efficient implementation of the translation operators.
+This class also automatically determines the available CPU features at runtime
+and chooses the most efficient implementation available.
+\item \lstinline|buffer_handle|. \emph{Each thread needs its own handle.} These
+handles need to be created for a given \lstinline|operator_handle|. As the
+name implies, a \lstinline|buffer_handle| encapsulates buffers which a thread
+can use as its workspace when performing translations.
+\end{enumerate}
+
+Handles can be copied, default constructed, and also support assignment
+operations. In a typical scenario, however, a user would create these handles
+\emph{only once} at program start-up and then pass them around by reference.
+The relevant parts of the user-interface are as follows:
+\begin{cppcode*}
+template <typename real>
+class operator_handle
+{
+public:
+	// …
+    operator_handle( size_t P );
+    buffer_handle<real> make_buffer() const;    
+	// …
+};
+
+template <typename real>
+class buffer_handle
+{
+public:
+	// …
+    buffer_handle( const operator_data<real> &op );
+	// …
+};
+\end{cppcode*}
+
+In other words, a \lstinline|buffer_handle| needs to be created specifically
+for a particular \lstinline|operator_handle|. As discussed in
+\cref{sec:quickinit}, this can for example be achieved as follows:
+\begin{cppcode*}
+// The maximum number of concurrent threads you are going to use.
+// For example, on a CPU with 8 cores:
+const size_t nthreads { 8 };
+
+// Only one such object is necessary; it can and should be shared among threads.
+// For exmaple, if you never need expansion orders beyond P = 30:
+operator_handle<double> op  { 30 }; 
+                                     
+// Each thread needs its own buffer; it must not be shared.
+std::vector<buffer_handle<double>> buffers(nthreads,op.make_buffer());
+\end{cppcode*}
+
+These routines may throw exceptions of type \lstinline|std::bad_alloc|. Again,
+it is illegal to use other types than \lstinline[style=cpp]|double| and
+\lstinline[style=cpp]|float| for the template parameter \lstinline|real|.
+
+The translation operations make use of faculties up to $2P-2$. For this
+reason, for \lstinline[style=cpp]|float| the maximum supported order is 18:
+for higher orders the number $(2P-2)!$ is out of the range of this type. For
+double precision calculations the corresponding limit is 86. In both cases,
+the accuracies achieved by expansions of such high order are usually already
+exceeding the precision of the respective floating point numbers. In this
+case the constructors throw exceptions of type \lstinline|std::overflow_error|.
+Passing $P=0$ will case an exception of type \lstinline|std::logic_error| to be
+thrown.
+
+
+\section{\texttt{solidfmm/translations.hpp}}
+This header contains the actual translation operations:
+\begin{cppcode*}
+void m2m( const operator_data<double> &op, threadlocal_buffer<double> &buf, 
+          size_t howmany, const solid<double> *const *const Min,
+                                solid<double> *const *const Mout,
+          const double *x, const double *y, const double *z );
+
+void m2l( const operator_data<double> &op, threadlocal_buffer<double> &buf, 
+          size_t howmany, const solid<double> *const *const M,
+                                solid<double> *const *const L,
+          const double *x, const double *y, const double *z );
+
+void l2l( const operator_data<double> &op, threadlocal_buffer<double> &buf, 
+          size_t howmany, const solid<double> *const *const Lin,
+                                solid<double> *const *const Lout,
+          const double *x, const double *y, const double *z );
+\end{cppcode*}
+and the corresponding functions for single precision calculations using
+\lstinline[style=cpp]|float|.
+
+The types \lstinline|operator_data| and \lstinline|threadlocal_buffer| are the
+implementation details that are encapsulated by the handle classes in
+\cref{sec:handles}. Thus, a user should pass the corresponding handles instead,
+and \emph{never} use the internal classes \lstinline|operator_data| and
+\lstinline|threadlocal_buffer| directly.
+
+The mathematical background and details of these operations are discussed in
+\cref{chp:mathbackground}. The usage of these functions is already illustrated
+in \cref{sec:quicktranslations}. In addition to the scenario described there,
+these operations also support vector-valued \lstinline|solid|s. In this case
+the translations are carried out component-wise along the specified shift
+vector. For this to work, the target \lstinline|solid|s must match the
+dimension of the input expansion. In other words, for example for 
+\MtoL\ one must have for all $i=0,\dotsc,\mathtt{howmany}-1$:
+\begin{center}
+\lstinline|M[i]->dimension() == L[i]->dimension()|.
+\end{center}
+
+Again, these functions provide the strong exception guarantee. In case an
+exception is thrown, they leave their arguments unchanged. The following
+exceptions can be thrown:
+\begin{itemize}
+\item \lstinline|std::logic_error| If input and output dimensions of the passed
+\lstinline|solid|s differ. This also is thrown if you pass a
+\lstinline|buffer_handle| that was created for a different
+\lstinline|operator_handle|.
+\item \lstinline|std::out_of_range| if the order of one of the passed
+\lstinline|solid|s exceeds the order of the given \lstinline|operator_handle|.
+\end{itemize}
+
+\part{Developer Guide}\label{part:developer}
+
+\chapter{Microkernels}
+I am currently still working on a detailed developer guide. In the mean time,
+for an overview of the implementation techniques used by \solidfmm, I refer to
+the white paper at:
+\begin{center}
+\url{https://rwth-aachen.sciebo.de/s/YIJFvSERVBiOkbc}
+\end{center}
+
+\appendix
+\part*{Appendices}
+\addparttocentry{}{Appendices}
+
+\chapter{GNU Free Documentation License}
+\label{chp:gnufdl}
+
+ \begin{center}
+
+       Version 1.3, 3 November 2008
+
+
+ Copyright \copyright{} 2000, 2001, 2002, 2007, 2008  Free Software Foundation, Inc.
+ 
+ \bigskip
+ 
+     \url{<https://fsf.org/>}
+  
+ \bigskip
+ 
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+\end{center}
+
+
+\begin{center}
+{\Large\bfseries 0. PREAMBLE\par}
+\end{center}
+The purpose of this License is to make a manual, textbook, or other
+functional and useful document ``free'' in the sense of freedom: to
+assure everyone the effective freedom to copy and redistribute it,
+with or without modifying it, either commercially or noncommercially.
+Secondarily, this License preserves for the author and publisher a way
+to get credit for their work, while not being considered responsible
+for modifications made by others.
+
+This License is a kind of ``copyleft'', which means that derivative
+works of the document must themselves be free in the same sense.  It
+complements the GNU General Public License, which is a copyleft
+license designed for free software.
+
+We have designed this License in order to use it for manuals for free
+software, because free software needs free documentation: a free
+program should come with manuals providing the same freedoms that the
+software does.  But this License is not limited to software manuals;
+it can be used for any textual work, regardless of subject matter or
+whether it is published as a printed book.  We recommend this License
+principally for works whose purpose is instruction or reference.
+
+
+\begin{center}
+{\Large\bfseries 1. APPLICABILITY AND DEFINITIONS\par}
+\end{center}
+This License applies to any manual or other work, in any medium, that
+contains a notice placed by the copyright holder saying it can be
+distributed under the terms of this License.  Such a notice grants a
+world-wide, royalty-free license, unlimited in duration, to use that
+work under the conditions stated herein.  The ``\textbf{Document}'', below,
+refers to any such manual or work.  Any member of the public is a
+licensee, and is addressed as ``\textbf{you}''.  You accept the license if you
+copy, modify or distribute the work in a way requiring permission
+under copyright law.
+
+A ``\textbf{Modified Version}'' of the Document means any work containing the
+Document or a portion of it, either copied verbatim, or with
+modifications and/or translated into another language.
+
+A ``\textbf{Secondary Section}'' is a named appendix or a front-matter section of
+the Document that deals exclusively with the relationship of the
+publishers or authors of the Document to the Document's overall subject
+(or to related matters) and contains nothing that could fall directly
+within that overall subject.  (Thus, if the Document is in part a
+textbook of mathematics, a Secondary Section may not explain any
+mathematics.)  The relationship could be a matter of historical
+connection with the subject or with related matters, or of legal,
+commercial, philosophical, ethical or political position regarding
+them.
+
+The ``\textbf{Invariant Sections}'' are certain Secondary Sections whose titles
+are designated, as being those of Invariant Sections, in the notice
+that says that the Document is released under this License.  If a
+section does not fit the above definition of Secondary then it is not
+allowed to be designated as Invariant.  The Document may contain zero
+Invariant Sections.  If the Document does not identify any Invariant
+Sections then there are none.
+
+The ``\textbf{Cover Texts}'' are certain short passages of text that are listed,
+as Front-Cover Texts or Back-Cover Texts, in the notice that says that
+the Document is released under this License.  A Front-Cover Text may
+be at most 5 words, and a Back-Cover Text may be at most 25 words.
+
+A ``\textbf{Transparent}'' copy of the Document means a machine-readable copy,
+represented in a format whose specification is available to the
+general public, that is suitable for revising the document
+straightforwardly with generic text editors or (for images composed of
+pixels) generic paint programs or (for drawings) some widely available
+drawing editor, and that is suitable for input to text formatters or
+for automatic translation to a variety of formats suitable for input
+to text formatters.  A copy made in an otherwise Transparent file
+format whose markup, or absence of markup, has been arranged to thwart
+or discourage subsequent modification by readers is not Transparent.
+An image format is not Transparent if used for any substantial amount
+of text.  A copy that is not ``Transparent'' is called ``\textbf{Opaque}''.
+
+Examples of suitable formats for Transparent copies include plain
+ASCII without markup, Texinfo input format, LaTeX input format, SGML
+or XML using a publicly available DTD, and standard-conforming simple
+HTML, PostScript or PDF designed for human modification.  Examples of
+transparent image formats include PNG, XCF and JPG.  Opaque formats
+include proprietary formats that can be read and edited only by
+proprietary word processors, SGML or XML for which the DTD and/or
+processing tools are not generally available, and the
+machine-generated HTML, PostScript or PDF produced by some word
+processors for output purposes only.
+
+The ``\textbf{Title Page}'' means, for a printed book, the title page itself,
+plus such following pages as are needed to hold, legibly, the material
+this License requires to appear in the title page.  For works in
+formats which do not have any title page as such, ``Title Page'' means
+the text near the most prominent appearance of the work's title,
+preceding the beginning of the body of the text.
+
+The ``\textbf{publisher}'' means any person or entity that distributes
+copies of the Document to the public.
+
+A section ``\textbf{Entitled XYZ}'' means a named subunit of the Document whose
+title either is precisely XYZ or contains XYZ in parentheses following
+text that translates XYZ in another language.  (Here XYZ stands for a
+specific section name mentioned below, such as ``\textbf{Acknowledgements}'',
+``\textbf{Dedications}'', ``\textbf{Endorsements}'', or ``\textbf{History}''.)  
+To ``\textbf{Preserve the Title}''
+of such a section when you modify the Document means that it remains a
+section ``Entitled XYZ'' according to this definition.
+
+The Document may include Warranty Disclaimers next to the notice which
+states that this License applies to the Document.  These Warranty
+Disclaimers are considered to be included by reference in this
+License, but only as regards disclaiming warranties: any other
+implication that these Warranty Disclaimers may have is void and has
+no effect on the meaning of this License.
+
+
+\begin{center}
+{\Large\bfseries 2. VERBATIM COPYING\par}
+\end{center}
+You may copy and distribute the Document in any medium, either
+commercially or noncommercially, provided that this License, the
+copyright notices, and the license notice saying this License applies
+to the Document are reproduced in all copies, and that you add no other
+conditions whatsoever to those of this License.  You may not use
+technical measures to obstruct or control the reading or further
+copying of the copies you make or distribute.  However, you may accept
+compensation in exchange for copies.  If you distribute a large enough
+number of copies you must also follow the conditions in section~3.
+
+You may also lend copies, under the same conditions stated above, and
+you may publicly display copies.
+
+
+\begin{center}
+{\Large\bfseries 3. COPYING IN QUANTITY\par}
+\end{center}
+If you publish printed copies (or copies in media that commonly have
+printed covers) of the Document, numbering more than 100, and the
+Document's license notice requires Cover Texts, you must enclose the
+copies in covers that carry, clearly and legibly, all these Cover
+Texts: Front-Cover Texts on the front cover, and Back-Cover Texts on
+the back cover.  Both covers must also clearly and legibly identify
+you as the publisher of these copies.  The front cover must present
+the full title with all words of the title equally prominent and
+visible.  You may add other material on the covers in addition.
+Copying with changes limited to the covers, as long as they preserve
+the title of the Document and satisfy these conditions, can be treated
+as verbatim copying in other respects.
+
+If the required texts for either cover are too voluminous to fit
+legibly, you should put the first ones listed (as many as fit
+reasonably) on the actual cover, and continue the rest onto adjacent
+pages.
+
+If you publish or distribute Opaque copies of the Document numbering
+more than 100, you must either include a machine-readable Transparent
+copy along with each Opaque copy, or state in or with each Opaque copy
+a computer-network location from which the general network-using
+public has access to download using public-standard network protocols
+a complete Transparent copy of the Document, free of added material.
+If you use the latter option, you must take reasonably prudent steps,
+when you begin distribution of Opaque copies in quantity, to ensure
+that this Transparent copy will remain thus accessible at the stated
+location until at least one year after the last time you distribute an
+Opaque copy (directly or through your agents or retailers) of that
+edition to the public.
+
+It is requested, but not required, that you contact the authors of the
+Document well before redistributing any large number of copies, to give
+them a chance to provide you with an updated version of the Document.
+
+
+\begin{center}
+{\Large\bfseries 4. MODIFICATIONS\par}
+\end{center}
+You may copy and distribute a Modified Version of the Document under
+the conditions of sections 2 and 3 above, provided that you release
+the Modified Version under precisely this License, with the Modified
+Version filling the role of the Document, thus licensing distribution
+and modification of the Modified Version to whoever possesses a copy
+of it.  In addition, you must do these things in the Modified Version:
+
+\begin{itemize}
+\item[A.] 
+   Use in the Title Page (and on the covers, if any) a title distinct
+   from that of the Document, and from those of previous versions
+   (which should, if there were any, be listed in the History section
+   of the Document).  You may use the same title as a previous version
+   if the original publisher of that version gives permission.
+   
+\item[B.]
+   List on the Title Page, as authors, one or more persons or entities
+   responsible for authorship of the modifications in the Modified
+   Version, together with at least five of the principal authors of the
+   Document (all of its principal authors, if it has fewer than five),
+   unless they release you from this requirement.
+   
+\item[C.]
+   State on the Title page the name of the publisher of the
+   Modified Version, as the publisher.
+   
+\item[D.]
+   Preserve all the copyright notices of the Document.
+   
+\item[E.]
+   Add an appropriate copyright notice for your modifications
+   adjacent to the other copyright notices.
+   
+\item[F.]
+   Include, immediately after the copyright notices, a license notice
+   giving the public permission to use the Modified Version under the
+   terms of this License, in the form shown in the Addendum below.
+   
+\item[G.]
+   Preserve in that license notice the full lists of Invariant Sections
+   and required Cover Texts given in the Document's license notice.
+   
+\item[H.]
+   Include an unaltered copy of this License.
+   
+\item[I.]
+   Preserve the section Entitled ``History'', Preserve its Title, and add
+   to it an item stating at least the title, year, new authors, and
+   publisher of the Modified Version as given on the Title Page.  If
+   there is no section Entitled ``History'' in the Document, create one
+   stating the title, year, authors, and publisher of the Document as
+   given on its Title Page, then add an item describing the Modified
+   Version as stated in the previous sentence.
+   
+\item[J.]
+   Preserve the network location, if any, given in the Document for
+   public access to a Transparent copy of the Document, and likewise
+   the network locations given in the Document for previous versions
+   it was based on.  These may be placed in the ``History'' section.
+   You may omit a network location for a work that was published at
+   least four years before the Document itself, or if the original
+   publisher of the version it refers to gives permission.
+   
+\item[K.]
+   For any section Entitled ``Acknowledgements'' or ``Dedications'',
+   Preserve the Title of the section, and preserve in the section all
+   the substance and tone of each of the contributor acknowledgements
+   and/or dedications given therein.
+   
+\item[L.]
+   Preserve all the Invariant Sections of the Document,
+   unaltered in their text and in their titles.  Section numbers
+   or the equivalent are not considered part of the section titles.
+   
+\item[M.]
+   Delete any section Entitled ``Endorsements''.  Such a section
+   may not be included in the Modified Version.
+   
+\item[N.]
+   Do not retitle any existing section to be Entitled ``Endorsements''
+   or to conflict in title with any Invariant Section.
+   
+\item[O.]
+   Preserve any Warranty Disclaimers.
+\end{itemize}
+
+If the Modified Version includes new front-matter sections or
+appendices that qualify as Secondary Sections and contain no material
+copied from the Document, you may at your option designate some or all
+of these sections as invariant.  To do this, add their titles to the
+list of Invariant Sections in the Modified Version's license notice.
+These titles must be distinct from any other section titles.
+
+You may add a section Entitled ``Endorsements'', provided it contains
+nothing but endorsements of your Modified Version by various
+parties---for example, statements of peer review or that the text has
+been approved by an organization as the authoritative definition of a
+standard.
+
+You may add a passage of up to five words as a Front-Cover Text, and a
+passage of up to 25 words as a Back-Cover Text, to the end of the list
+of Cover Texts in the Modified Version.  Only one passage of
+Front-Cover Text and one of Back-Cover Text may be added by (or
+through arrangements made by) any one entity.  If the Document already
+includes a cover text for the same cover, previously added by you or
+by arrangement made by the same entity you are acting on behalf of,
+you may not add another; but you may replace the old one, on explicit
+permission from the previous publisher that added the old one.
+
+The author(s) and publisher(s) of the Document do not by this License
+give permission to use their names for publicity for or to assert or
+imply endorsement of any Modified Version.
+
+
+\begin{center}
+{\Large\bfseries 5. COMBINING DOCUMENTS\par}
+\end{center}
+You may combine the Document with other documents released under this
+License, under the terms defined in section~4 above for modified
+versions, provided that you include in the combination all of the
+Invariant Sections of all of the original documents, unmodified, and
+list them all as Invariant Sections of your combined work in its
+license notice, and that you preserve all their Warranty Disclaimers.
+
+The combined work need only contain one copy of this License, and
+multiple identical Invariant Sections may be replaced with a single
+copy.  If there are multiple Invariant Sections with the same name but
+different contents, make the title of each such section unique by
+adding at the end of it, in parentheses, the name of the original
+author or publisher of that section if known, or else a unique number.
+Make the same adjustment to the section titles in the list of
+Invariant Sections in the license notice of the combined work.
+
+In the combination, you must combine any sections Entitled ``History''
+in the various original documents, forming one section Entitled
+``History''; likewise combine any sections Entitled ``Acknowledgements'',
+and any sections Entitled ``Dedications''.  You must delete all sections
+Entitled ``Endorsements''.
+
+\begin{center}
+{\Large\bfseries 6. COLLECTIONS OF DOCUMENTS\par}
+\end{center}
+You may make a collection consisting of the Document and other documents
+released under this License, and replace the individual copies of this
+License in the various documents with a single copy that is included in
+the collection, provided that you follow the rules of this License for
+verbatim copying of each of the documents in all other respects.
+
+You may extract a single document from such a collection, and distribute
+it individually under this License, provided you insert a copy of this
+License into the extracted document, and follow this License in all
+other respects regarding verbatim copying of that document.
+
+
+\begin{center}
+{\Large\bfseries 7. AGGREGATION WITH INDEPENDENT WORKS\par}
+\end{center}
+A compilation of the Document or its derivatives with other separate
+and independent documents or works, in or on a volume of a storage or
+distribution medium, is called an ``aggregate'' if the copyright
+resulting from the compilation is not used to limit the legal rights
+of the compilation's users beyond what the individual works permit.
+When the Document is included in an aggregate, this License does not
+apply to the other works in the aggregate which are not themselves
+derivative works of the Document.
+
+If the Cover Text requirement of section~3 is applicable to these
+copies of the Document, then if the Document is less than one half of
+the entire aggregate, the Document's Cover Texts may be placed on
+covers that bracket the Document within the aggregate, or the
+electronic equivalent of covers if the Document is in electronic form.
+Otherwise they must appear on printed covers that bracket the whole
+aggregate.
+
+
+\begin{center}
+{\Large\bfseries 8. TRANSLATION\par}
+\end{center}
+Translation is considered a kind of modification, so you may
+distribute translations of the Document under the terms of section~4.
+Replacing Invariant Sections with translations requires special
+permission from their copyright holders, but you may include
+translations of some or all Invariant Sections in addition to the
+original versions of these Invariant Sections.  You may include a
+translation of this License, and all the license notices in the
+Document, and any Warranty Disclaimers, provided that you also include
+the original English version of this License and the original versions
+of those notices and disclaimers.  In case of a disagreement between
+the translation and the original version of this License or a notice
+or disclaimer, the original version will prevail.
+
+If a section in the Document is Entitled ``Acknowledgements'',
+``Dedications'', or ``History'', the requirement (section~4) to Preserve
+its Title (section~1) will typically require changing the actual
+title.
+
+
+\begin{center}
+{\Large\bfseries 9. TERMINATION\par}
+\end{center}
+You may not copy, modify, sublicense, or distribute the Document
+except as expressly provided under this License.  Any attempt
+otherwise to copy, modify, sublicense, or distribute it is void, and
+will automatically terminate your rights under this License.
+
+However, if you cease all violation of this License, then your license
+from a particular copyright holder is reinstated (a) provisionally,
+unless and until the copyright holder explicitly and finally
+terminates your license, and (b) permanently, if the copyright holder
+fails to notify you of the violation by some reasonable means prior to
+60 days after the cessation.
+
+Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, receipt of a copy of some or all of the same material does
+not give you any rights to use it.
+
+
+\begin{center}
+{\Large\bfseries 10. FUTURE REVISIONS OF THIS LICENSE\par}
+\end{center}
+The Free Software Foundation may publish new, revised versions
+of the GNU Free Documentation License from time to time.  Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.  See
+\url{https://www.gnu.org/licenses/}.
+
+Each version of the License is given a distinguishing version number.
+If the Document specifies that a particular numbered version of this
+License ``or any later version'' applies to it, you have the option of
+following the terms and conditions either of that specified version or
+of any later version that has been published (not as a draft) by the
+Free Software Foundation.  If the Document does not specify a version
+number of this License, you may choose any version ever published (not
+as a draft) by the Free Software Foundation.  If the Document
+specifies that a proxy can decide which future versions of this
+License can be used, that proxy's public statement of acceptance of a
+version permanently authorizes you to choose that version for the
+Document.
+
+
+\begin{center}
+{\Large\bfseries 11. RELICENSING\par}
+\end{center}
+``Massive Multiauthor Collaboration Site'' (or ``MMC Site'') means any
+World Wide Web server that publishes copyrightable works and also
+provides prominent facilities for anybody to edit those works.  A
+public wiki that anybody can edit is an example of such a server.  A
+``Massive Multiauthor Collaboration'' (or ``MMC'') contained in the
+site means any set of copyrightable works thus published on the MMC
+site.
+
+``CC-BY-SA'' means the Creative Commons Attribution-Share Alike 3.0
+license published by Creative Commons Corporation, a not-for-profit
+corporation with a principal place of business in San Francisco,
+California, as well as future copyleft versions of that license
+published by that same organization.
+
+``Incorporate'' means to publish or republish a Document, in whole or
+in part, as part of another Document.
+
+An MMC is ``eligible for relicensing'' if it is licensed under this
+License, and if all works that were first published under this License
+somewhere other than this MMC, and subsequently incorporated in whole
+or in part into the MMC, (1) had no cover texts or invariant sections,
+and (2) were thus incorporated prior to November 1, 2008.
+
+The operator of an MMC Site may republish an MMC contained in the site
+under CC-BY-SA on the same site at any time before August 1, 2009,
+provided the MMC is eligible for relicensing.
+
+
+\begin{center}
+{\Large\bfseries ADDENDUM: How to use this License for your documents\par}
+\end{center}
+To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and
+license notices just after the title page:
+
+\bigskip
+\begin{quote}
+    Copyright \copyright{}  YEAR  YOUR NAME.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.3
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+    A copy of the license is included in the section entitled ``GNU
+    Free Documentation License''.
+\end{quote}
+\bigskip
+    
+If you have Invariant Sections, Front-Cover Texts and Back-Cover Texts,
+replace the ``with \dots\ Texts.''\ line with this:
+
+\bigskip
+\begin{quote}
+    with the Invariant Sections being LIST THEIR TITLES, with the
+    Front-Cover Texts being LIST, and with the Back-Cover Texts being LIST.
+\end{quote}
+\bigskip
+    
+If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License,
+to permit their use in free software.
+
+\chapter{GNU General Public License}\label{chp:gnugpl}
+
+\begin{center}
+{\parindent 0in
+Version 3, 29 June 2007\\
+Copyright \copyright\  2007 Free Software Foundation, Inc.\\
+\url{https://fsf.org/}
+
+\bigskip
+Everyone is permitted to copy and distribute verbatim copies of this
+
+license document, but changing it is not allowed.}
+
+\end{center}
+
+\begin{center}
+{\Large\textsc{Preamble}}
+\end{center}
+
+The GNU General Public License is a free, copyleft license for
+software and other kinds of works.
+
+The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+the GNU General Public License is intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.  We, the Free Software Foundation, use the
+GNU General Public License for most of our software; it applies also to
+any other work released this way by its authors.  You can apply it to
+your programs, too.
+
+When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+To protect your rights, we need to prevent others from denying you
+these rights or asking you to surrender the rights.  Therefore, you have
+certain responsibilities if you distribute copies of the software, or if
+you modify it: responsibilities to respect the freedom of others.
+
+For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must pass on to the recipients the same
+freedoms that you received.  You must make sure that they, too, receive
+or can get the source code.  And you must show them these terms so they
+know their rights.
+
+Developers that use the GNU GPL protect your rights with two steps:
+(1) assert copyright on the software, and (2) offer you this License
+giving you legal permission to copy, distribute and/or modify it.
+
+For the developers' and authors' protection, the GPL clearly explains
+that there is no warranty for this free software.  For both users' and
+authors' sake, the GPL requires that modified versions be marked as
+changed, so that their problems will not be attributed erroneously to
+authors of previous versions.
+
+Some devices are designed to deny users access to install or run
+modified versions of the software inside them, although the manufacturer
+can do so.  This is fundamentally incompatible with the aim of
+protecting users' freedom to change the software.  The systematic
+pattern of such abuse occurs in the area of products for individuals to
+use, which is precisely where it is most unacceptable.  Therefore, we
+have designed this version of the GPL to prohibit the practice for those
+products.  If such problems arise substantially in other domains, we
+stand ready to extend this provision to those domains in future versions
+of the GPL, as needed to protect the freedom of users.
+
+Finally, every program is threatened constantly by software patents.
+States should not allow patents to restrict development and use of
+software on general-purpose computers, but in those that do, we wish to
+avoid the special danger that patents applied to a free program could
+make it effectively proprietary.  To prevent this, the GPL assures that
+patents cannot be used to render the program non-free.
+
+The precise terms and conditions for copying, distribution and
+modification follow.
+
+\begin{center}
+{\Large\textsc{Terms and Conditions}}
+\end{center}
+
+
+\begin{enumerate}
+
+\addtocounter{enumi}{-1}
+
+\item Definitions.
+
+``This License'' refers to version 3 of the GNU General Public License.
+
+``Copyright'' also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+``The Program'' refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as ``you''.  ``Licensees'' and
+``recipients'' may be individuals or organizations.
+
+To ``modify'' a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a ``modified version'' of the
+earlier work or a work ``based on'' the earlier work.
+
+A ``covered work'' means either the unmodified Program or a work based
+on the Program.
+
+To ``propagate'' a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+To ``convey'' a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+An interactive user interface displays ``Appropriate Legal Notices''
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+\item Source Code.
+
+The ``source code'' for a work means the preferred form of the work
+for making modifications to it.  ``Object code'' means any non-source
+form of a work.
+
+A ``Standard Interface'' means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+The ``System Libraries'' of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+``Major Component'', in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+The ``Corresponding Source'' for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+The Corresponding Source for a work in source code form is that
+same work.
+
+\item Basic Permissions.
+
+All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
+
+Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+\item Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+\item Conveying Verbatim Copies.
+
+You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+\item Conveying Modified Source Versions.
+
+You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+  \begin{enumerate}
+  \item The work must carry prominent notices stating that you modified
+  it, and giving a relevant date.
+
+  \item The work must carry prominent notices stating that it is
+  released under this License and any conditions added under section
+  7.  This requirement modifies the requirement in section 4 to
+  ``keep intact all notices''.
+
+  \item You must license the entire work, as a whole, under this
+  License to anyone who comes into possession of a copy.  This
+  License will therefore apply, along with any applicable section 7
+  additional terms, to the whole of the work, and all its parts,
+  regardless of how they are packaged.  This License gives no
+  permission to license the work in any other way, but it does not
+  invalidate such permission if you have separately received it.
+
+  \item If the work has interactive user interfaces, each must display
+  Appropriate Legal Notices; however, if the Program has interactive
+  interfaces that do not display Appropriate Legal Notices, your
+  work need not make them do so.
+\end{enumerate}
+A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+``aggregate'' if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+\item Conveying Non-Source Forms.
+
+You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+  \begin{enumerate}
+  \item Convey the object code in, or embodied in, a physical product
+  (including a physical distribution medium), accompanied by the
+  Corresponding Source fixed on a durable physical medium
+  customarily used for software interchange.
+
+  \item Convey the object code in, or embodied in, a physical product
+  (including a physical distribution medium), accompanied by a
+  written offer, valid for at least three years and valid for as
+  long as you offer spare parts or customer support for that product
+  model, to give anyone who possesses the object code either (1) a
+  copy of the Corresponding Source for all the software in the
+  product that is covered by this License, on a durable physical
+  medium customarily used for software interchange, for a price no
+  more than your reasonable cost of physically performing this
+  conveying of source, or (2) access to copy the
+  Corresponding Source from a network server at no charge.
+
+  \item Convey individual copies of the object code with a copy of the
+  written offer to provide the Corresponding Source.  This
+  alternative is allowed only occasionally and noncommercially, and
+  only if you received the object code with such an offer, in accord
+  with subsection 6b.
+
+  \item Convey the object code by offering access from a designated
+  place (gratis or for a charge), and offer equivalent access to the
+  Corresponding Source in the same way through the same place at no
+  further charge.  You need not require recipients to copy the
+  Corresponding Source along with the object code.  If the place to
+  copy the object code is a network server, the Corresponding Source
+  may be on a different server (operated by you or a third party)
+  that supports equivalent copying facilities, provided you maintain
+  clear directions next to the object code saying where to find the
+  Corresponding Source.  Regardless of what server hosts the
+  Corresponding Source, you remain obligated to ensure that it is
+  available for as long as needed to satisfy these requirements.
+
+  \item Convey the object code using peer-to-peer transmission, provided
+  you inform other peers where the object code and Corresponding
+  Source of the work are being offered to the general public at no
+  charge under subsection 6d.
+  \end{enumerate}
+
+A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+A ``User Product'' is either (1) a ``consumer product'', which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, ``normally used'' refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+``Installation Information'' for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+\item Additional Terms.
+
+``Additional permissions'' are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+  \begin{enumerate}
+  \item Disclaiming warranty or limiting liability differently from the
+  terms of sections 15 and 16 of this License; or
+
+  \item Requiring preservation of specified reasonable legal notices or
+  author attributions in that material or in the Appropriate Legal
+  Notices displayed by works containing it; or
+
+  \item Prohibiting misrepresentation of the origin of that material, or
+  requiring that modified versions of such material be marked in
+  reasonable ways as different from the original version; or
+
+  \item Limiting the use for publicity purposes of names of licensors or
+  authors of the material; or
+
+  \item Declining to grant rights under trademark law for use of some
+  trade names, trademarks, or service marks; or
+
+  \item Requiring indemnification of licensors and authors of that
+  material by anyone who conveys the material (or modified versions of
+  it) with contractual assumptions of liability to the recipient, for
+  any liability that these contractual assumptions directly impose on
+  those licensors and authors.
+  \end{enumerate}
+
+All other non-permissive additional terms are considered ``further
+restrictions'' within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+\item Termination.
+
+You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+\item Acceptance Not Required for Having Copies.
+
+You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+\item Automatic Licensing of Downstream Recipients.
+
+Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+An ``entity transaction'' is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+\item Patents.
+
+A ``contributor'' is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's ``contributor version''.
+
+A contributor's ``essential patent claims'' are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, ``control'' includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+In the following three paragraphs, a ``patent license'' is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To ``grant'' such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  ``Knowingly relying'' means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+A patent license is ``discriminatory'' if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+\item No Surrender of Others' Freedom.
+
+If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+\item Use with the GNU Affero General Public License.
+
+Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU Affero General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the special requirements of the GNU Affero General Public License,
+section 13, concerning interaction through a network will apply to the
+combination as such.
+
+\item Revised Versions of this License.
+
+The Free Software Foundation may publish revised and/or new versions of
+the GNU General Public License from time to time.  Such new versions will
+be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU General
+Public License ``or any later version'' applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+If the Program specifies that a proxy can decide which future
+versions of the GNU General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+\item Disclaimer of Warranty.
+
+\begin{sloppypar}
+ THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+ APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE
+ COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM ``AS IS''
+ WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE
+ RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.
+ SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+ NECESSARY SERVICING, REPAIR OR CORRECTION.
+\end{sloppypar}
+
+\item Limitation of Liability.
+
+ IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+ WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES
+ AND/OR CONVEYS THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR
+ DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL
+ DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM
+ (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED
+ INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE
+ OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH
+ HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ DAMAGES.
+
+\item Interpretation of Sections 15 and 16.
+
+If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+\begin{center}
+{\Large\textsc{End of Terms and Conditions}}
+
+\bigskip
+How to Apply These Terms to Your New Programs
+\end{center}
+
+If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the ``copyright'' line and a pointer to where the full notice is found.
+
+{\footnotesize
+\begin{verbatim}
+<one line to give the program's name and a brief idea of what it does.>
+
+Copyright (C) <textyear>  <name of author>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+\end{verbatim}
+}
+
+Also add information on how to contact you by electronic and paper mail.
+
+If the program does terminal interaction, make it output a short
+notice like this when it starts in an interactive mode:
+
+{\footnotesize
+\begin{verbatim}
+<program>  Copyright (C) <year>  <name of author>
+
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+This is free software, and you are welcome to redistribute it
+under certain conditions; type `show c' for details.
+\end{verbatim}
+}
+
+The hypothetical commands \texttt{show w} and \texttt{show c} should show
+the appropriate parts of the General Public License.  Of course, your program's
+commands might be different; for a GUI interface, you would use an
+``about box''.
+
+You should also get your employer (if you work as a programmer) or
+school, if any, to sign a ``copyright disclaimer'' for the program, if
+necessary.  For more information on this, and how to apply and follow
+the GNU GPL, see \url{https://www.gnu.org/licenses/}.
+
+The GNU General Public License does not permit incorporating your
+program into proprietary programs.  If your program is a subroutine
+library, you may consider it more useful to permit linking proprietary
+applications with the library.  If this is what you want to do, use
+the GNU Lesser General Public License instead of this License.  But
+first, please read \url{https://www.gnu.org/licenses/why-not-lgpl.html}.
+
+\end{enumerate}
+
+
+
+
+\backmatter
+\printbibliography
+
+\end{document}

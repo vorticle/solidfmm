@@ -1,4 +1,4 @@
-AC_INIT([solidfmm],[1.1])
+AC_INIT([solidfmm],[1.2])
 AC_CANONICAL_SYSTEM
 AC_CONFIG_MACRO_DIR([m4])
 

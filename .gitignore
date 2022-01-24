@@ -33,6 +33,17 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 
+doc/solidfmm.aux
+doc/solidfmm.bbl
+doc/solidfmm.bcf
+doc/solidfmm.blg
+doc/solidfmm.listing
+doc/solidfmm.out
+doc/solidfmm.run.xml
+doc/solidfmm.synctex.gz
+doc/solidfmm.toc
+
+
 tests/test_swap_matrix
 tests/test_swap
 tests/test_rotation

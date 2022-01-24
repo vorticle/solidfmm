@@ -26,7 +26,9 @@ namespace solidfmm
 {
 
 template <typename real> class operator_data;
+template <typename real> class operator_handle;
 template <typename real> class threadlocal_buffer;
+template <typename real> class buffer_handle;
 
 template <typename real>
 class operator_handle
@@ -51,6 +53,9 @@ public:
         rhs.p = tmp;
         return *this;
     }
+
+
+    buffer_handle<real> make_buffer() const;    
 
     using       reference =       operator_data<real>&;
     using const_reference = const operator_data<real>&;

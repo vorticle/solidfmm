@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2022 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -48,15 +48,16 @@ void test( size_t P )
 {
     using solidfmm::m2l;
     using solidfmm::solid;
-    using solidfmm::harmonics::R;
+    using solidfmm::harmonics:: R;
+    using solidfmm::harmonics::dR;
     using solidfmm::harmonics::S;
     using solidfmm::operator_handle;
     using solidfmm::  buffer_handle;
 
     real xs = 1.1, ys = 0.2, zs = 0.9;  // Source.
     real xa = 1,   ya = 0,   za = 1;    // Multipole expansion centre.
-    real xb = 0.0, yb = 0.0, zb = 2;    // Local expansion centre.
-    real x  = 0.1, y  = 0.1, z  = 2.5;  // Evaluation point.
+    real xb = 0.3, yb = 0.1, zb = 2;    // Local expansion centre.
+    real x  = 0.1, y  = 0.2, z  = 2.5;  // Evaluation point.
 
     real r = std::hypot(x-xs,y-ys);
          r = std::hypot(r   ,z-zs);
@@ -109,6 +110,30 @@ void test( size_t P )
 
 
     dot( L, R<real>(P, (x-xb), (y-yb), (z-zb)), &res ); res /= 32;
-    std::cout << "L-expansion after M2L: " << std::setw(10)  << r*std::abs(res-1/r) << ".\n";
+    std::cout << "L-expansion after M2L: " << std::setw(10)  << r*std::abs(res-1/r) << ". ";
+
+    real gradient[3];
+    dot( L, dR<real>(P, (x-xb), (y-yb), (z-zb)), gradient );
+    gradient[0] /= 32;
+    gradient[1] /= 32;
+    gradient[2] /= 32;
+
+    real exact_gradient[3];
+    exact_gradient[0] = -(x-xs)/(r*r*r);
+    exact_gradient[1] = -(y-ys)/(r*r*r);
+    exact_gradient[2] = -(z-zs)/(r*r*r);
+
+    real grad_error = 0;
+    grad_error = std::hypot(gradient[0]-exact_gradient[0], grad_error );
+    grad_error = std::hypot(gradient[1]-exact_gradient[1], grad_error );
+    grad_error = std::hypot(gradient[2]-exact_gradient[2], grad_error );
+
+    real grad_norm = 0;
+    grad_norm = std::hypot(exact_gradient[0],grad_norm);
+    grad_norm = std::hypot(exact_gradient[1],grad_norm);
+    grad_norm = std::hypot(exact_gradient[2],grad_norm);
+
+    std::cout << "Gradient error: " << grad_error/grad_norm << ".\n";
+    
 }
 

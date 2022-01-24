@@ -1,12 +1,33 @@
-October 29th, 2021: Initial Release of solidfmm.
+===============================================================================
+October 29th, 2021: solidfmm-1.0.
+
+Initial Release of solidfmm.
 
 
-
+===============================================================================
 November 9th, 2021: solidfmm-1.1.
 
 Added support for AVX-512. Double precision versions of both AVX and AVX-512
-now use a different algorithms for reading solids into the thread local buffers
+now use a different algorithm for reading solids into the thread local buffers
 and back. In effect, the necessary matrix transposition is done in a vectorised
 fashion in the processor registers now. At P = 20 this trick gives about
 15-20% increase in performance.
+
+
+===============================================================================
+January 24th, 2022: solidfmm-1.2.
+
+The most important change of this release is the addition of a detailed user guide
+in the doc folder. This user-guide supersedes the previous HOWTO file. The developer
+guide is still work-in-progress, the user guide is fairly complete. Up to typos,
+that is.
+
+Additionally, solidfmm now also supports vector-valued expansions and the
+evaluation of the gradients of the solid harmonics R and S. This code has
+been already in solidfmm-1.1, but was not documented and still contained bugs.
+This has changed in this released: the code is tested and its usage is
+documented in the user guide.
+
+A very minor addition to the operator_handle interface: make_buffer() generates
+matching buffer_handles for the given operator_handle. 
 

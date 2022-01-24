@@ -3,6 +3,8 @@
 
                                    README
 
+      **** A detailed user guide can be found in the "doc" folder. ****
+
 ================================================================================
 
 Summary.
@@ -40,6 +42,7 @@ LIST OF FEATURES:
 The assembly implementations assume that either GCC's (GNU Compiler Collection)
 or LLVM's (clang) C++ compiler is used. 
 
+NOTE: **** A detailed user guide can be found in the doc folder. ****
 
 ================================================================================
 
