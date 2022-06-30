@@ -33,6 +33,7 @@ class threadlocal_buffer
 public:
     threadlocal_buffer() noexcept;
     threadlocal_buffer( const operator_data<real> &op );
+    threadlocal_buffer( size_t P, const microkernel<real> *kernel );
     threadlocal_buffer( const threadlocal_buffer  &rhs );
     threadlocal_buffer(       threadlocal_buffer &&rhs ) noexcept;
     threadlocal_buffer& operator=( const threadlocal_buffer  &rhs );
@@ -49,6 +50,8 @@ private:
     size_t alignment, bufsize;
     real *buf, **ptr_buf;
     size_t *Pbuf;
+
+    void init();
 
 public:
     real *r, *rinv;

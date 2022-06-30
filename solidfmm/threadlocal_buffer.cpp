@@ -56,6 +56,24 @@ threadlocal_buffer<real>::threadlocal_buffer( const operator_data<real> &op ):
  alignment { op.kernel()->alignment },
  bufsize   { 0 }
 {
+    init();
+}
+
+template <typename real>
+threadlocal_buffer<real>::threadlocal_buffer( size_t p_P, const microkernel<real> *kernel ):
+ P         { p_P }, 
+ rows      { kernel->rows }, 
+ cols      { kernel->cols },
+ alignment { kernel->alignment },
+ bufsize   { 0 }
+{
+    init();
+}
+
+// This method may only be called by constructors!
+template <typename real>
+void threadlocal_buffer<real>::init()
+{
     std::unique_ptr<real*[]> ptr_buf_ { new real*[4*P + 2*cols] };
 
     trans_real_in  = ptr_buf_.get() + 0*P;
@@ -131,6 +149,7 @@ threadlocal_buffer<real>::threadlocal_buffer( const operator_data<real> &op ):
     ptr_buf = ptr_buf_.release();
        Pbuf =    Pbuf_.release();
 }
+
 
 template <typename real>
 threadlocal_buffer<real>::threadlocal_buffer( const threadlocal_buffer &rhs ):
@@ -280,7 +299,7 @@ template <typename real>
 void threadlocal_buffer<real>::initialise( const operator_data<real> &op )
 {
     threadlocal_buffer<real> tmp { op };
-    swap(tmp);
+    this->swap(tmp);
 }
 
 template <typename real>

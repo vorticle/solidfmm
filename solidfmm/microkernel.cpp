@@ -22,8 +22,6 @@
 #include <solidfmm/microkernel_avx512f.hpp>
 #include <solidfmm/microkernel_generic.hpp>
 
-#include <iostream>
-
 namespace solidfmm
 {
 

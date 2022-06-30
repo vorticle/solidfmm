@@ -19,20 +19,9 @@
 \usepackage{fontspec}
 \usepackage{unicode-math}
 
-%%
-%% Alternative font options
-%%
-%\setmainfont{TeX Gyre Bonum}
-%\setmathfont{Tex Gyre Bonum Math}
-%\setmainfont{TeX Gyre Pagella}
-%\setmathfont{Tex Gyre Pagella Math}
-%\setmainfont{TeX Gyre Termes}
-%\setmathfont{Tex Gyre Termes Math}
-
 \setmainfont[Numbers=OldStyle,Ligatures={TeX,Common}]{TeX Gyre Schola}
 \setmathfont{Tex Gyre Schola Math}
 \setsansfont[Scale=MatchLowercase]{TeX Gyre Heros}
-%\setmonofont{TeX Gyre Cursor}
 \setmonofont[Scale=MatchLowercase,Contextuals={Alternate}]{Fira Code}
 
 % A bug in the math fonts: they do not have the setminus.
@@ -1667,8 +1656,8 @@ Given a set of \enquote{particles} with location $\vv{x}_i$ and mass $m_i$,
 $i=0,\dotsc,N-1$, we desire to compute multipole or local
 expansions around respective centres $\vv{x}_A$ and $\vv{x}_B$:
 \begin{equation}
-M_n^m = \sum_{i=0}^{N-1}m_i R_n^m(\vv{x}-\vv{x}_A),\qquad
-L_n^m = \sum_{i=0}^{N-1}m_i S_n^m(\vv{x}-\vv{x}_B).
+M_n^m = \sum_{i=0}^{N-1}m_i R_n^m(\vv{x}_i-\vv{x}_A),\qquad
+L_n^m = \sum_{i=0}^{N-1}m_i S_n^m(\vv{x}_i-\vv{x}_B).
 \end{equation}
 This operation thus always takes multiples of a \lstinline|solid| containing the
 values of the regular or singular harmonics, and accumulates them into a
@@ -1681,16 +1670,20 @@ void fmadd( const double  fac, const solid<double> &A, solid<double> &B );
 void fmadd( const double *fac, const solid<double> &A, solid<double> &B );
 \end{cppcode*}
 
-In all of these operations one must have both \lstinline|A.dimension() == B.dimension()| and \lstinline|A.order() == B.order()|, because it is not
-clear how to meaningfully define those operations otherwise. These functions
-throw exceptions of type \lstinline|std::logic_error| if one of these conditions
-is violated. Again, the strong exception guarantee is given: in case an
-exception is thrown, the function's arguments are not changed.
+In all of these operations one must have both
+\lstinline|A.dimension() == B.dimension()| and
+\lstinline|A.order() == B.order()|, because it is not clear how to meaningfully
+define those operations otherwise. These functions throw exceptions of type
+\lstinline|std::logic_error| if one of these conditions is violated. Again, the
+strong exception guarantee is given: in case an exception is thrown, the
+function's arguments are not changed.
 
 The functions taking a \emph{value} \lstinline|fac| essentially perform
 \lstinline|B += fac*A|; but note that \solidfmm\ does not implement
 \lstinline|operator+=|. The operations taking a \emph{pointer} \lstinline|fac|
-assume that it points to an array of size \lstinline|A.dimension() == B.dimension()|; the $d$'th component is then scaled by \lstinline|fac[d]|.
+assume that it points to an array of size
+\lstinline|A.dimension() == B.dimension()|; the $d$'th component is then scaled
+by \lstinline|fac[d]|.
 
 We are still not sure how to devise a more flexible interface, we are open
 for suggestions!
@@ -1714,11 +1707,11 @@ template <typename real> solid<real> dS( size_t P, real x, real y, real z );
 
 The parameter \lstinline|P| specifies the order up to which you wish to evaluate
 the harmonics. The parameters \lstinline|x|,\lstinline|y|, and \lstinline|z| are
-the respective components of the position vector $\vv{x}=(\mathtt{x},\mathtt{y},\mathtt{z})^\top\in\wholespace$ at which
-you want to evaluate the harmonic functions. Only \lstinline[style=cpp]|double|
-and \lstinline[style=cpp]|float| are supported for the template parameter
-\lstinline|real|. These functions may throw exceptions of type
-\lstinline|std::bad_alloc|.
+the respective components of the position vector $\vv{x}=(\mathtt{x},\mathtt{y},
+\mathtt{z})^\top\in\wholespace$ at which you want to evaluate the harmonic
+functions. Only \lstinline[style=cpp]|double| and \lstinline[style=cpp]|float|
+are supported for the template parameter \lstinline|real|. These functions may
+throw exceptions of type \lstinline|std::bad_alloc|.
 
 \section{\texttt{solidfmm/handles.hpp}}\label{sec:handles}
 The handle classes encapsulate resources that are implementation details but
@@ -1726,7 +1719,7 @@ are needed to carry out the translation operations \MtoM, \MtoL, and \LtoL.
 There are two kinds of handles:
 \begin{enumerate}
 \item \lstinline|operator_handle|. Only one of these handles is needed, it
-can and \emph{should be shared} among threads. It is a wrapper to the an
+can and \emph{should be shared} among threads. It is a wrapper to an
 implementation detail, which essentially stores the so-called Wigner matrices,
 which are needed for the efficient implementation of the translation operators.
 This class also automatically determines the available CPU features at runtime
@@ -1805,7 +1798,8 @@ void m2l( const operator_data<double> &op, threadlocal_buffer<double> &buf,
           size_t howmany, const solid<double> *const *const M,
                                 solid<double> *const *const L,
           const double *x, const double *y, const double *z );
-
+
+
 void l2l( const operator_data<double> &op, threadlocal_buffer<double> &buf, 
           size_t howmany, const solid<double> *const *const Lin,
                                 solid<double> *const *const Lout,
@@ -1847,12 +1841,666 @@ exceptions can be thrown:
 \part{Developer Guide}\label{part:developer}
 
 \chapter{Microkernels}
-I am currently still working on a detailed developer guide. In the mean time,
-for an overview of the implementation techniques used by \solidfmm, I refer to
-the white paper at:
-\begin{center}
-\url{https://rwth-aachen.sciebo.de/s/YIJFvSERVBiOkbc}
-\end{center}
+At their core, the translations \MtoM, \MtoL, and \LtoL\ break down to certain
+copy operations and dense matrix--matrix products. However, every CPU
+architecture is different, hence each requires its own specific, optimised
+implementation of these operations to obtain maximum performance. This leads
+to the question: \enquote{How can we write \emph{one} library that achieves
+high performance on \emph{many} platforms?}
+
+To answer this question, \solidfmm\ follows the approach taken the BLIS
+developers~\autocite{blispaper,blisproject} and uses the concept of
+microkernels. While each CPU requires its own implementation, microkernels
+encapsulate the key operations behind a unified interface. The
+\enquote{driver code} then can remain machine independent, while the
+machine specific code is reduced to a well-defined, isolated, small
+set of functions. Due to this localisation, the library can be quickly
+adapted to new architectures.
+
+In C++, the most natural choice to represent such an interface is a
+base class that gives a generic (potentially slow) default
+implementation of these routines in the form of
+\lstinline[style=cpp]|virtual| functions. For each new CPU architecture
+optimised implementations can then be provided by deriving from this base class
+and overriding the generic default routines. The driver routines only make use
+of the base class, and through run-time polymorphism the optimised, machine
+specific routines get called.
+
+In this chapter we describe \solidfmm's microkernel interface. We specify the
+functionality that these functions must implement, how to include such
+a new microkernel into \solidfmm, and how to test that it is working. How to
+achieve maximum performance on your computer is, of course, machine dependent.
+However, many routines are similar to general matrix--matrix products. As a
+starting point, we thus suggest to take a look at the
+BLIS\autocite{blisproject},
+which comes with highly efficient microkernels for a variety of platforms.
+These can serve as an inspiration when writing your own microkernels for
+\solidfmm. Their authors furthermore created an excellent lecture series
+in which they share their expertise.\autocite{blislecture}
+
+\section{Overview}
+The \lstinline|microkernel| class is declared in its own header file:
+\begin{cppcode*}
+#include <solidfmm/microkernel.hpp>
+\end{cppcode*}
+
+Its interface is given in the following listing. As usual, the only permissible
+values for the template parameter \lstinline|real| are \lstinline[style=cpp]|float|
+and \lstinline[style=cpp]|double|.
+
+\begin{cppcode}{Interface of the \lstinline|microkernel| class.}
+template <typename real>
+class microkernel
+{
+public:
+    const size_t rows;
+    const size_t cols;
+    const size_t alignment;
+
+    microkernel( size_t p_rows, size_t p_cols, size_t p_alignment ) noexcept:
+    rows { p_rows }, cols { p_cols }, alignment { p_alignment } {}
+
+    virtual ~microkernel() = default;
+
+    virtual void euler( const real *x,   const real *y, const real *z,
+                              real *r,         real *rinv,
+                              real *cos_alpha, real *sin_alpha,
+                              real *cos_beta,  real *sin_beta,
+                        size_t k ) const noexcept = 0;
+
+    virtual void rotscale( const real *cos, const real *sin, const real *scale,
+                           const real *real_in,  const real *imag_in,
+                                 real *real_out,       real *imag_out,
+                           size_t k, bool forward ) const noexcept = 0;
+
+    virtual void swap( const real *mat, const real *in,
+                       real *out, size_t k, bool pattern ) const noexcept = 0;
+
+    virtual void zm2l( const real *mat, const real *in, 
+                       real *out, size_t k, bool pattern ) const noexcept = 0;
+
+    virtual void zm2m( const real *mat, const real *in,
+                       real *out, size_t k ) const noexcept = 0;
+    
+    virtual void swap2trans_buf( const real  *real_in,  const real  *imag_in,
+                                       real **real_out,       real **imag_out,
+                                 size_t n ) const noexcept = 0;
+
+    virtual void trans2swap_buf( const real *const *const real_in, 
+                                 const real *const *const imag_in,
+                                       real *real_out, real *imag_out,
+                                 size_t n, size_t Pmax ) const noexcept = 0;
+
+    virtual void solid2buf( const real *const *solids,
+                  const real *const  zeros, const size_t *P,
+                  real *real_out, real *imag_out, size_t n ) const noexcept = 0;
+
+    virtual void buf2solid( const real *real_in, const real *imag_in, 
+                            real **solids, real *trash,
+                            const size_t *P, size_t n ) const noexcept = 0;
+};
+\end{cppcode}
+
+\subsection{Data Members}
+\paragraph{Block Size.}
+As described before, in the course of a translation operation, certain
+matrix--matrix products $C=AB$ need to be computed. \solidfmm\ computes such
+products in a block-wise fashion: the matrix $C$ is sub-divided into blocks of
+size  $\texttt{rows}\times\texttt{cols}$ and then calls the necessary
+microkernel routines. Together these two parameters are called \emph{block
+size}. The block size should be chosen according to the following guidelines:
+\begin{itemize}
+\item Even number of rows. The parameter \lstinline|rows| \emph{must} be a
+multiple of two. 
+\item Register space. The block-size should be as large as possible
+such that it can still fit into the processor's registers, and such
+that enough spare registers remain for forming the matrix--matrix
+products. Ideally you use exactly all available registers and leave
+no un-used registers behind.
+\item Ratio. The parameters should fulfil $\texttt{rows}\approx\texttt{cols}$,
+yielding approximately square blocks. This ensures optimal data reuse and
+avoids unnecessary memory transfers.
+\end{itemize}
+
+For the rest of this chapter we will write $\mu\coloneqq$\,\lstinline|rows| and
+$\nu\coloneqq$\,\lstinline|cols|.
+
+\paragraph{Alignment.}
+The \lstinline|alignment| parameter causes \solidfmm\ to ensure that
+the first entry of the matrices $B$ and $C$ (but \emph{not} $A$) will be aligned
+as specified. A $k$ byte alignment means that the memory address is a multiple
+of $k$. For example, 32~byte alignment causes the addresses of the respective
+first entries of $B$ and $C$ to be divisible by~32. Many processors offer extra
+fast instructions for aligned memory access. Use this parameter to be able to
+make use of these optimisations. There are certain restrictions that this
+parameter must fulfil:
+\begin{itemize}
+\item It must be a power of two, i.\,e., $\texttt{alignment}=2^l$ for some
+integer $l\in\naturals_0$.
+\item The size of one row needs to be a fixed multiple of \lstinline|alignment|:
+\begin{equation*}
+\texttt{{\colour{green!60!black}sizeof}(real)}\times\texttt{cols} = 0 \quad
+(\mathrm{mod}\ \texttt{alignment}),
+\end{equation*}
+or, equivalently, in C++ syntax, one must have:
+\begin{cppcode*}
+(sizeof(real)*cols) % alignment == 0
+\end{cppcode*}
+This ensures that the beginning of every row of $B$ and $C$ has the same
+alignment.
+\end{itemize}
+
+\subsection{Function Members}
+There are three kinds of routines in a \lstinline|microkernel|:
+\begin{itemize}
+\item Copy routines: \lstinline|solid2buf|, \lstinline|buf2solid|,
+\lstinline|swap2trans_buf|, and \lstinline|trans2swap_buf|. These
+operations copy and rearrange data between different locations.
+\item Matrix--matrix products: \lstinline|swap|, \lstinline|m2m|, and
+\lstinline|m2l|. These routines carry out specialised matrix--matrix
+products $C=AB$, where $C$ is of dimension $\texttt{rows}\times
+\texttt{cols}$. The remaining dimension of these matrices is
+called \lstinline|k| and given as a parameter at run-time.
+\item Other: \lstinline|euler| and \lstinline|rotscale| will be
+described separately.
+\end{itemize}
+
+We will describe each of these routines in greater detail below.
+
+\section{Copy Routines}
+
+\subsection{\texorpdfstring{\lstinline|solid2buf()|}{solid2buf}}
+\begin{cppcode*}
+virtual void solid2buf( const real *const *solids,
+                        const real *const  zeros, const size_t *P,
+                        real *real_out, real *imag_out, size_t n ) const noexcept;
+\end{cppcode*}
+This method copies the line $n$ of given solids into buffers for further
+processing.
+
+We are given $\nu$ \emph{scalar} solids $C_n^m[0]$, $C_n^m[1]$, \textellipsis,
+$C_n^m[\nu-1]$ of respective orders $P[0]$, $P[1]$, \textellipsis, $P[\nu-1]$.
+The parameter \lstinline|solids| is an array of pointers to these solids. Each
+of these solids is stored as described in \cref{fig:solidmemorylayout}. In other
+words, to access $\Re C_n^m[k]$ for some $n$, $m$, and $k$ you would write:
+\begin{cppcode*}
+solids[k][ (n+0)*(n+1) + m ]
+\end{cppcode*}
+Here we assumed $n,m,k\in\naturals_0$ and that $k<\nu$, $n < P[k]$,
+$m\leq n$. Whenever $n\geq P[k]$ it is implicitly assumed that $C_n^m[k]=0$.
+Thus, more correctly, to access the value of, e.\,g., $\Im C_n^m[k]$, the
+complete code snippet would be:
+\begin{cppcode*}
+real value = (n<P[k]) ? solids[k][ (n+1)*(n+1) + m ] : 0;
+\end{cppcode*}
+
+In the method \lstinline|solid2buf()| the value of $n$ is fixed and given
+as a parameter. The task is now to copy row $n$ of each solid into the matrices
+\lstinline|real_out| and \lstinline|imag_out|, that respectively hold the real
+and imaginary parts of the solids. These matrices are stored in \emph{row-major}
+order and look as follows:
+\begin{equation}
+\begin{pmatrix}
+\Re C_n^0[0] & \Re C_n^0[1] & \cdots & \Re C_n^0[\nu-1] \\
+\Re C_n^1[0] & \Re C_n^1[1] & \cdots & \Re C_n^1[\nu-1] \\
+\vdots       & \vdots       & \ddots & \vdots           \\ 
+\Re C_n^n[0] & \Re C_n^n[1] & \cdots & \Re C_n^n[\nu-1]
+\end{pmatrix}
+\quad
+\begin{pmatrix}
+\Im C_n^0[0] & \Im C_n^0[1] & \cdots & \Im C_n^0[\nu-1] \\
+\Im C_n^1[0] & \Im C_n^1[1] & \cdots & \Im C_n^1[\nu-1] \\
+\vdots       & \vdots       & \ddots & \vdots           \\ 
+\Im C_n^n[0] & \Im C_n^n[1] & \cdots & \Im C_n^n[\nu-1]
+\end{pmatrix}
+\end{equation}
+
+Thus, the behaviour of this function is equivalent to the following snippet:
+\begin{cppcode*}
+for ( size_t m = 0; m <= n;    ++m )
+for ( size_t k = 0; k <= cols; ++k )
+{
+    real_out[ m*cols + k ] = (n<P[k]) ? solids[k][ (n+0)*(n+1) + m ] : 0;
+    imag_out[ m*cols + k ] = (n<P[k]) ? solids[k][ (n+1)*(n+1) + m ] : 0;
+}
+\end{cppcode*}
+
+The parameter \lstinline|zeros| points to a memory location containing zero
+values, that may be used to avoid repeatedly checking if we have
+\lstinline|n<P[k]|. This can be done by creating a local pointer array, leading
+to the following solution of the task:
+\begin{cppcode*}
+const real* tmp_solids[ cols ];
+for ( size_t k = 0; k < cols; ++k )
+{
+    if ( n < P[k] )
+        tmp_solids[ k ] = const_cast<real*>(solids[k]);
+    else
+        tmp_solids[ k ] = const_cast<real*>(zeros);
+}
+
+for ( size_t m = 0; m <= n;    ++m )
+for ( size_t k = 0; k <= cols; ++k )
+{
+    real_out[ m*cols + k ] = tmp_solids[k][ (n+0)*(n+1) + m ];
+    imag_out[ m*cols + k ] = tmp_solids[k][ (n+1)*(n+1) + m ];
+}
+\end{cppcode*}
+This way the condition \lstinline|n < P[k]| only needs to be checked once per
+solid.
+
+The matrices \lstinline|real_out| and \lstinline|imag_out| are aligned according
+to the \lstinline|alignment| member of the microkernel object. The solids will
+usually be unaligned. Additionally, the solids may alias, i.\,e.,
+\lstinline|solid[i]| may point to the same location as \lstinline|solid[j]|.
+Keep this in mind when trying to optimise this operation.
+
+\subsection{\texorpdfstring{\lstinline|buf2solid()|}{buf2solid}}
+\begin{cppcode*}
+virtual void buf2solid( const real *real_in, const real *imag_in, 
+                        real **solids, real *trash, const size_t *P, size_t n )
+                        const noexcept;
+\end{cppcode*}
+In essence, this is the inverse to the routine \lstinline|solid2buf()|,
+which we described in the previous subsection. In other words, the data from
+the given buffers is copied to the target solids. If the order of the target
+solid is below \lstinline|n|, the data gets discarded. The \lstinline|trash|
+parameter can be used to write data in this case. This prevents frequent
+rechecking if we have \lstinline|P[k]<n|, similar to the \lstinline|zeros|
+parameter from \lstinline|solid2buf()|.
+
+However, unlike in \lstinline|solid2buf()|, the data is \emph{added} to the
+output solids. This enables the users to accumulate several input expansions
+into a single output expansion. It is thus crucial to keep in mind that
+the pointers from the \lstinline|solids| array \emph{may and often do alias}.
+Thus, after adding to \lstinline|solids[i]| for some $i$, it is important to
+keep in mind that \lstinline|solid[j]| might also have been changed, as we might
+have \lstinline|solid[i]==solid[j]| even when $i\neq j$. In an assembly language
+implementation this means that \lstinline|solid[i+1]| can only be read from
+memory \emph{after writing} \lstinline|solid[i]|. A simple default
+implementation in C++ looks as follows:
+\begin{cppcode*}
+real* tmp_solids[ cols ];
+for ( size_t k = 0; k < cols; ++k )
+    tmp_solids[ k ] = ( n < P[k] ) ? solids[k] : trash;
+
+for ( size_t m = 0; m <= n;    ++m )
+for ( size_t k = 0; k <= cols; ++k )
+{
+    tmp_solids[k][ (n+0)*(n+1) + m ] += real_in[ m*cols + k ];
+    tmp_solids[k][ (n+1)*(n+1) + m ] += imag_in[ m*cols + k ];
+}
+\end{cppcode*}
+
+Note that both \lstinline|solid2buf()| and \lstinline|buf2solid()| are similar
+to transposing a matrix in memory. When creating high-performance
+implementations of this operation, you can try using tricks for matrix
+transposition to obtain higher performance. Also note that \lstinline|real_in|
+and \lstinline|imag_in| are aligned according to the \lstinline|alignment|
+member, but the individual solids are usually not aligned.
+
+
+\subsection{\texorpdfstring{\lstinline|swap2trans_buf()|}{swap2trans_buf}}
+\begin{cppcode*}
+virtual void swap2trans_buf( const real  *real_in,  const real  *imag_in,
+                                   real **real_out,       real **imag_out,
+                                   size_t n ) const noexcept;
+\end{cppcode*}
+
+There are two kinds of buffers in \solidfmm: swap and translation
+buffers. Swap buffers hold \emph{some row} $n$ of $\nu$ solids
+$C[0],C[1],\dotsc,C[\nu-1]$, i.\,e., they are matrices of the shape
+\begin{equation*}
+\begin{pmatrix}
+\Re C_n^0[0] & \Re C_n^0[1] & \hdots & \Re C_n^0[\nu-1]\\
+\Re C_n^1[0] & \Re C_n^1[1] & \hdots & \Re C_n^1[\nu-1]\\
+\Re C_n^2[0] & \Re C_n^2[1] & \hdots & \Re C_n^2[\nu-1]\\
+\vdots       & \vdots       & \ddots & \vdots          \\
+\Re C_n^n[0] & \Re C_n^n[1] & \hdots & \Re C_n^n[\nu-1]
+\end{pmatrix}\quad
+\begin{pmatrix}
+\Im C_n^0[0] & \Im C_n^0[1] & \hdots & \Im C_n^0[\nu-1]\\
+\Im C_n^1[0] & \Im C_n^1[1] & \hdots & \Im C_n^1[\nu-1]\\
+\Im C_n^2[0] & \Im C_n^2[1] & \hdots & \Im C_n^2[\nu-1]\\
+\vdots       & \vdots       & \ddots & \vdots          \\
+\Im C_n^n[0] & \Im C_n^n[1] & \hdots & \Im C_n^n[\nu-1]
+\end{pmatrix},
+\end{equation*}
+and are stored in row-major format. Conversely, a translation buffer stores
+\emph{some column} $m$ of $\nu$ different solids. For example, for a fixed
+$m$, the real-part of a translation buffer looks like follows:
+\begin{equation*}
+\begin{pmatrix}
+\Re C_m^m[0]     & \Re C_m^m[1]     & \hdots & \Re C_m^m[\nu-1]    \\
+\Re C_{m+1}^m[0] & \Re C_{m+1}^m[1] & \hdots & \Re C_{m+1}^m[\nu-1]\\
+\Re C_{m+2}^m[0] & \Re C_{m+2}^m[1] & \hdots & \Re C_{m+2}^m[\nu-1]\\
+\vdots           & \vdots           & \ddots & \vdots              
+\end{pmatrix},
+\end{equation*}
+where the matrix is stored in row-major format and the imaginary
+parts are stored analogously.
+
+This method takes the content of the swap buffers given as
+\lstinline|real_in| and \lstinline|imag_in| of the given row
+\lstinline|n| and copies it to the corresponding positions in the translation
+buffers. A simple C++ implementation would look like follows.
+\begin{cppcode*}
+for ( size_t m = 0; m <= n;    ++m )
+for ( size_t k = 0; k <  cols; ++k )
+{
+    real_out[m][ (n-m)*cols + k ] = real_in[ m*cols + k ];
+    imag_out[m][ (n-m)*cols + k ] = imag_in[ m*cols + k ];
+}
+\end{cppcode*}
+All of the buffers are aligned according to the \lstinline|alignment| member.
+This enables the use of fast, aligned copy instructions on certain
+machines.
+
+\subsection{\texorpdfstring{\lstinline|trans2swap_buf()|}{trans2swap_buf}}
+\begin{cppcode*}
+virtual void trans2swap_buf( const real *const *const real_in, 
+                             const real *const *const imag_in,
+                                   real *real_out, real *imag_out,
+                             size_t n, size_t Pmax ) const noexcept;
+\end{cppcode*}
+This is the inverse operation to \lstinline|swap2trans_buf|, as
+described above. The parameter \lstinline|Pmax| indicates that values
+$C_n^m[k]$ with $m\geq P_{\mathrm{max}}$ are considered to be zero. A simple 
+C++ implementation could thus look as follows:
+\begin{cppcode*}
+// First the entries where m < Pmax
+for ( size_t m = 0; m < min(Pmax,n+1); ++m )
+for ( size_t k = 0; k < cols;          ++k )
+{
+    real_out[ m*cols + k ] = real_in[m][ (n-m)*cols + k ];
+    imag_out[ m*cols + k ] = imag_in[m][ (n-m)*cols + k ];
+}
+
+// Now the remaining entries, if any.
+for ( size_t m = Pmax; m <= n;    ++m )
+for ( size_t k = 0;    k <  cols; ++k )
+{
+    real_out[ m*cols + k ] = 0;
+    imag_out[ m*cols + k ] = 0;
+}
+\end{cppcode*}
+
+
+\section{Matrix--matrix Product Routines}
+The methods of this section compute matrix--matrix products $C=AB$, where
+$C\in\reals^{\mu\times\nu}$, $A\in\reals^{\mu\times k}$, and
+$B\in\reals^{k\times\nu}$. For convenience we abbreviate
+$\mu\coloneqq\mathtt{rows}$ and $\nu\coloneqq\mathtt{cols}$. We will denote the
+mathematical matrices with capital letters; pointers to the corresponding
+data will be denoted by denoted by lower case letters.
+
+The matrices $C$ and $B$ are stored in row-major format, e.\,g., $C_{ij}$ can
+be accessed via \lstinline|c[i*cols + j]|, where $i=0,\dotsc,\mu-1$ and
+$j=0,\dotsc,\nu-1$. Similarly, $B_{ij}$ can be accessed via
+\lstinline|b[i*cols+j]|, where $i=0,1,\dotsc,k-1$ and $j=0,1,\dotsc,\nu-1$.
+Both \lstinline|c| and \lstinline|b| will be aligned according to the
+\lstinline|alignment| class member.
+
+The pointer \lstinline|a| will usually not be aligned. The matrix $A$ is stored
+in special formats, depending on the particular routine.
+
+\subsection{\texorpdfstring{\lstinline|swap()|}{swap()}}
+\begin{cppcode*}
+virtual void swap( const real *a, const real *b, real *c, size_t k,
+                   bool pattern ) const noexcept;
+\end{cppcode*}
+This routine is called \lstinline|swap|, because it is used in coordinate
+transformations that correspond to swapping the $x$- and $z$-axis. The matrix
+$A$ here has one of two possible chequerboard patterns. Only half of
+$A$'s entries are non-zero. Only these non-zero entries are stored in
+\lstinline|a|, using a compressed column major format. In particular, if the
+\lstinline|pattern| parameter is true, $A$'s first entry is non-zero. For
+example, when $\mu=6$, the matrix $A$ then is given by:
+\begin{equation}
+A=
+\underbrace{%
+\begin{pmatrix}
+a[0] & 0    & a[6] & 0     & \cdots \\
+ 0   & a[3] & 0    & a[9]  & \cdots \\
+a[1] & 0    & a[7] & 0     & \cdots \\
+ 0   & a[4] & 0    & a[10] & \cdots \\
+a[2] & 0    & a[8] & 0     & \cdots \\
+ 0   & a[5] & 0    & a[11] & \cdots
+\end{pmatrix}}_{k\text{ columns}}
+\qquad\text{if \lstinline|pattern==true|.}
+\end{equation}
+Otherwise, if \lstinline|pattern==false|, the matrix $A$ is given by:
+\begin{equation}
+A=
+\underbrace{%
+\begin{pmatrix}
+ 0   & a[3] & 0    & a[9]  & \cdots \\
+a[0] & 0    & a[6] & 0     & \cdots \\
+ 0   & a[4] & 0    & a[10] & \cdots \\
+a[1] & 0    & a[7] & 0     & \cdots \\
+ 0   & a[5] & 0    & a[11] & \cdots \\
+a[2] & 0    & a[8] & 0     & \cdots
+\end{pmatrix}}_{k\text{ columns}}
+\qquad\text{if \lstinline|pattern==false|.}
+\end{equation}
+
+\subsection{\texorpdfstring{\lstinline|zm2l()|}{zm2l()}}
+\begin{cppcode*}
+virtual void zm2l( const real *a, const real *b, real *c, size_t k,
+                   bool pattern ) const noexcept;
+\end{cppcode*}
+This operation is needed when performing an \MtoL\ translation along the
+$z$-axis. Actually, two operations are carried out. First, the
+matrix--matrix product $C=AB$ is formed, where $A\in\reals^{\mu\times k}$ is
+given as follows:
+\begin{equation}
+A =
+\underbrace{%
+\begin{pmatrix}
+a[0]     & a[1]   & a[2]     & a[3]     & \cdots \\
+a[1]     & a[2]   & a[3]     & a[4]     & \cdots \\
+a[2]     & a[3]   & a[4]     & a[5]     & \cdots \\
+a[3]     & a[4]   & a[5]     & a[6]     & \cdots \\
+\vdots   & \vdots & \vdots   & \vdots   &        \\
+a[\mu-1] & a[\mu] & a[\mu+1] & a[\mu+2] & \cdots
+\end{pmatrix}}_{\text{$k$ columns}}.
+\end{equation}
+In other words, the value of $A_{ij}$ can be accessed via \lstinline|a[i+j]|,
+where $i=0,1,\dotsc,\mu-1$ and $j=0,1,\dotsc,k-1$.
+
+Once the product $C$ has been formed, we apply a sign pattern to the result:
+\begin{itemize}
+\item If \lstinline|pattern==true|: rows 0, 2, 4, \textellipsis, $\mu$-2 of the
+result matrix $C$ are multiplied by~$(-1)$.
+\item If \lstinline|pattern==false|: rows 1, 3, 5, \textellipsis, $\mu$-1 of the
+result matrix $C$ are multiplied by~$(-1)$.
+\end{itemize}
+
+\subsection{\texorpdfstring{\lstinline|zm2m()|}{zm2m()}}
+\begin{cppcode*}
+virtual void zm2m( const real *a, const real *b, real *c, size_t k ) const noexcept;
+\end{cppcode*}
+This operation is needed when performing \MtoM\ or \LtoL\ translations along
+the $z$-axis. It carries out a matrix--matrix product $C=AB$, where
+$A\in\reals^{\mu\times k}$ is given as follows:
+\begin{equation}
+A =
+\underbrace{%
+\begin{pmatrix}
+a[\mu-1] & a[\mu]   & a[\mu+1] & a[\mu+2] & \cdots \\
+a[\mu-2] & a[\mu-1] & a[\mu]   & a[\mu+1] & \cdots \\
+\vdots   & \vdots   & \vdots   & \vdots   &        \\
+a[1]     & a[2]     & a[3]     & a[4]     & \cdots \\
+a[0]     & a[1]     & a[2]     & a[3]     & \cdots \\
+\end{pmatrix}}_{\text{$k$ columns}}.
+\end{equation}
+
+In other words, the matrix $A$ corresponds to that of \lstinline|zm2l()|, but
+with the order of the rows reversed.
+
+
+\section{\texorpdfstring{\lstinline|euler|}{euler} and
+\texorpdfstring{\lstinline|rotscale|}{rotscale}}
+
+\subsection{\texorpdfstring{\lstinline|euler()|}{euler}}
+\begin{cppcode*}
+virtual void euler( const real *x,   const real *y, const real *z,
+                          real *r,         real *rinv,
+                          real *cos_alpha, real *sin_alpha,
+                          real *cos_beta,  real *sin_beta,
+                    size_t k ) const noexcept;
+\end{cppcode*}
+
+Given $\nu$ shift vectors with coordinates $(x[i],y[i],z[i])^\top$, $i=0,
+\dotsc,\nu-1$, this method computes data that is related to the Euler angles
+of a certain coordinate transform.
+
+This method fills the matrix \lstinline|r| powers of the lengths of these
+vectors and is stored in row-major format:
+\begin{equation*}
+\mathtt{r} = 
+\begin{pmatrix}
+1          & 1          & \hdots & 1          \\
+r[0]       & r[1]       & \hdots & r[\nu-1]   \\
+r[0]^2     & r[1]^2     & \hdots & r[\nu-1]^2 \\
+\vdots     & \vdots     & \ddots & \vdots     \\
+r[0]^{k-1} & r[1]^{k-1} & \hdots & r[\nu-1]^{k-1}
+\end{pmatrix},
+\end{equation*}
+where $r[i] \coloneqq \sqrt{x[i]^2+y[i]^2+z[i]^2}$.
+
+The matrix \lstinline|rinv| is filled with inverse powers thereof:
+\begin{equation*}
+\mathtt{rinv} = 
+\begin{pmatrix}
+1             & 1             & \hdots & 1               \\
+r[0]^{-1}     & r[1]^{-1}     & \hdots & r[\nu-1]^{-1}   \\
+r[0]^{-2}     & r[1]^{-2}     & \hdots & r[\nu-1]^{-2}   \\
+\vdots        & \vdots        & \ddots & \vdots          \\
+r[0]^{-(k-1)} & r[1]^{-(k-1)} & \hdots & r[\nu-1]^{-(k-1)}
+\end{pmatrix}.
+\end{equation*}
+
+The matrices \lstinline|cos_alpha| and \lstinline|sin_alpha| respectively store
+the real and imaginary parts powers of $e^{I\alpha[i]}$, $i=1,\dotsc,\nu-1$,
+where $I^2=-1$ is the imaginary unit and:
+\begin{equation*}
+\Re e^{I\alpha[i]} \coloneqq  \frac{y[i]}{\sqrt{x[i]^2+y[i]^2}},\quad
+\Im e^{I\alpha[i]} \coloneqq  \frac{x[i]}{\sqrt{x[i]^2+y[i]^2}},
+\end{equation*}
+with one special exception: if $\sqrt{x[i]^2+y[i]^2}=0$, one sets
+$\Re e^{I\alpha[i]} \coloneqq 1$ and $\Im e^{I\alpha[i]} \coloneqq 0.$ Powers
+of these numbers can be computed using the complex product of two numbers alone,
+no trigonometry is needed. However, as
+$e^{Ik\alpha[i]} = \cos(k\alpha[i]) +I\sin(k\alpha[i])$, the matrices
+\lstinline|cos_alpha| and \lstinline|sin_alpha| shall be filled by
+\lstinline|euler()| with the respective real and imaginary parts of
+$e^{Ik\alpha[i]}$ as follows:
+\begin{equation*}\label{eqn:sincosmatrix}
+\begin{split}
+\mathtt{cos\_alpha} &=
+\begin{pmatrix}
+1                & 1                & \hdots & 1                    \\
+\cos(\alpha[0])  & \cos(\alpha[1])  & \hdots & \cos(\alpha[\nu-1])  \\
+\cos(2\alpha[0]) & \cos(2\alpha[1]) & \hdots & \cos(2\alpha[\nu-1]) \\
+\cos(3\alpha[0]) & \cos(3\alpha[1]) & \hdots & \cos(3\alpha[\nu-1]) \\
+\vdots           & \vdots           & \ddots & \vdots               \\
+\cos(k\alpha[0]) & \cos(k\alpha[1]) & \hdots & \cos(k\alpha[\nu-1]) \\
+\end{pmatrix},
+\\[1cm]
+\mathtt{sin\_alpha} &=
+\begin{pmatrix}
+0                & 0                & \hdots & 0                    \\
+\sin(\alpha[0])  & \sin(\alpha[1])  & \hdots & \sin(\alpha[\nu-1])  \\
+\sin(2\alpha[0]) & \sin(2\alpha[1]) & \hdots & \sin(2\alpha[\nu-1]) \\
+\sin(3\alpha[0]) & \sin(3\alpha[1]) & \hdots & \sin(3\alpha[\nu-1]) \\
+\vdots           & \vdots           & \ddots & \vdots               \\
+\sin(k\alpha[0]) & \sin(k\alpha[1]) & \hdots & \sin(k\alpha[\nu-1]) \\
+\end{pmatrix}.
+\end{split}
+\end{equation*}
+
+Finally, the matrices \lstinline|cos_beta| and \lstinline|sin_beta| are defined
+analogously, where $e^{I\beta[i]}$ is given as follows:
+\begin{equation*}
+\Re e^{I\beta[i]} \coloneqq  \frac{z[i]}{\sqrt{x[i]^2+y[i]^2+z[i]^2}},\quad
+\Im e^{I\beta[i]} \coloneqq
+-\frac{\sqrt{x[i]^2+y[i]^2}}{\sqrt{x[i]^2+y[i]^2+z[i]^2}},
+\end{equation*}
+and, if $x[i]=y[i]=z[i]=0$: $\Re e^{I\beta[i]}\coloneqq 1$,
+$\Im e^{I\beta[i]}\coloneqq 0$.
+
+
+\subsection{\texorpdfstring{\lstinline|rotscale()|}{rotscale}}
+\begin{cppcode*}
+virtual void rotscale( const real *cos,      const real *sin, const real *scale,
+                       const real *real_in,  const real *imag_in,
+                             real *real_out,       real *imag_out,
+                       size_t k, bool forward ) const noexcept;
+\end{cppcode*}
+
+This operation performs an element-wise, complex multiplication $C=A\odot B$ of
+matrices of the same size $\complex^{k\times\nu}$, and stores the resulting
+real and imaginary parts of the matrix $C$ respectively in \lstinline|real_out|
+an \lstinline|imag_out|.
+
+The matrices of \lstinline|cos| and \lstinline|sin| contain the real and
+imaginary parts of powers of $e^{I\gamma}$, where
+$\gamma\in\lbrace\alpha,\beta\rbrace$, and $\alpha$ and $\beta$ are defined
+in the method \lstinline|euler()| above. If \lstinline|forward==true|, then
+the products are formed with powers of $e^{I\gamma}$, otherwise with its
+conjugate transpose $e^{-I\gamma}$.
+
+Finally, each row of the result gets scaled element-wise with the values
+in \lstinline|scale|. A simple C++ implementation of this method is as follows:
+\begin{cppcode*}
+if ( forward )
+{
+    for ( size_t i = 0; i < k;    ++i )
+    for ( size_t l = 0; l < cols; ++l )
+    {
+        real c   = cos    [ i*cols + l ];
+        real s   = sin    [ i*cols + l ];
+        real re  = real_in[ i*cols + l ];
+        real im  = imag_in[ i*cols + l ];
+        real fac = scale  [          l ];
+        
+        real_out[ i*cols + l ] = fac*(c*re - s*im);
+        imag_out[ i*cols + l ] = fac*(s*re + c*im);
+    }
+}
+else
+{
+    for ( size_t i = 0; i < k;    ++i )
+    for ( size_t l = 0; l < cols; ++l )
+    {
+        real c   = cos    [ i*cols + l ];
+        real s   = sin    [ i*cols + l ];
+        real re  = real_in[ i*cols + l ];
+        real im  = imag_in[ i*cols + l ];
+        real fac = scale  [          l ];
+        
+        real_out[ i*cols + l ] = fac*( c*re + s*im);
+        imag_out[ i*cols + l ] = fac*(-s*re + c*im);
+    }
+}
+\end{cppcode*}
+All matrices are aligned according to the \lstinline|alignment| member,
+the \lstinline|scale| array usually is not aligned.
+
+
+\section{Writing your own Microkernel}
+
+\subsection{Preparation}
+
+\subsection{Creating Files and Modifying the Build System}
+
+\subsection{Writing the Actual Code}
+
+\subsection{Testing and Benchmarking}
+
+\subsection{Enabling the Microkernel for the Library}
+
 
 \appendix
 \part*{Appendices}
@@ -3094,3 +3742,4 @@ first, please read \url{https://www.gnu.org/licenses/why-not-lgpl.html}.
 \printbibliography
 
 \end{document}
+

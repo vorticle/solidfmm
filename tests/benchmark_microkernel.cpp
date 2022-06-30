@@ -67,7 +67,7 @@ real swap_benchmark( size_t P )
         kernel->swap( mat, buf.swap_real_in, buf.swap_real_out, P, false );
     real elapsed = clock.elapsed();
 
-    // Flop-count: m*n*k
+    // Flop-count: 2*m*n*k / 2
     // Divided by two because only half of the entries are non-zero
     size_t flops = trials * kernel->rows * kernel->cols * P;
 

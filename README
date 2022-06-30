@@ -14,8 +14,7 @@ Summary.
 solidfmm is a highly optimised C++ library for operations on the solid
 harmonics as they are needed in fast multipole methods.
 
-Installation instructions can be found in the file INSTALL. Usage examples
-and a description of the API can be found in the file HOWTO.
+Installation instructions can be found in the user guide and the file INSTALL.
 
 LIST OF FEATURES:
 

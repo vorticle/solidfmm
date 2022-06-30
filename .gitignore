@@ -50,6 +50,7 @@ tests/test_rotation
 tests/test_m2l
 tests/test_m2m
 tests/test_l2l
+tests/test_microkernel
 tests/benchmark_avx
 tests/benchmark_m2m
 tests/benchmark_m2l

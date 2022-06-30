@@ -3,11 +3,12 @@ pkginclude_HEADERS = solid.hpp harmonics.hpp translations.hpp handles.hpp
 
 noinst_HEADERS = random.hpp stopwatch.hpp swap_matrix.hpp microkernel.hpp \
                  microkernel_avx.hpp microkernel_avx512f.hpp microkernel_generic.hpp \
-                 operator_data.hpp threadlocal_buffer.hpp
+                 microkernel_test.hpp \
+                 operator_data.hpp threadlocal_buffer.hpp 
 
 libsolidfmm_la_SOURCES = solid.cpp harmonics.cpp handles.cpp \
                          swap_matrix.cpp operator_data.cpp threadlocal_buffer.cpp \
                          microkernel.cpp microkernel_avx.cpp microkernel_avx512f.cpp microkernel_generic.cpp \
-                         translations.cpp
+                         microkernel_test.cpp translations.cpp
 libsolidfmm_la_LDFLAGS = -version-info 1:0:1
 

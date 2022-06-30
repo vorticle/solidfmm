@@ -146,8 +146,12 @@ void swap_impl( const real *__restrict__ mat,
     bool k_odd = k &  1;
          k     = k >> 1;
 
+    // This loop performs "double iterations": going through this loop
+    // once means two columns of the matrix A are processed.
     while ( k-- )
     {
+        // Checkerboard pattern: only every second entry is non-zero,
+        // therefore increas row by two in each iteration.
         for ( size_t i = 0; i < rows; i += 2 )
         {
             const real fac = *mat++;
@@ -155,7 +159,9 @@ void swap_impl( const real *__restrict__ mat,
                 c[i][j] = c[i][j] + fac*in[j];
         }
         in = in + cols;
-        
+      
+        // If the first column starts with a non-zero, the other one
+        // starts with a zero. So here we start counting from i = 1. 
         for ( size_t i = 1; i < rows; i += 2 )
         {
             const real fac = *mat++;
@@ -165,6 +171,8 @@ void swap_impl( const real *__restrict__ mat,
         in  = in + cols;
     }
 
+    // If matrix A has an odd number of columns, the last one is
+    // processed here.
     if ( k_odd )
     {
         for ( size_t i = 0; i < rows; i += 2 )
@@ -176,6 +184,8 @@ void swap_impl( const real *__restrict__ mat,
         in = in + cols;
     }
 
+    // If the matrix A has the opposite pattern, we need to swap
+    // the resoluting rows of the C matrix before storing it.
     if ( pattern )
     {
         for ( size_t i = 0; i < rows/2; ++i )
@@ -222,6 +232,7 @@ void zm2l_impl( const real *__restrict__ fac,
         fac = fac + 1;
     }
 
+    // Apply the sign pattern.
     if ( pattern )
     {
         for ( size_t i = 0; i < rows; i += 2 )
@@ -262,6 +273,7 @@ void zm2m_impl( const real *__restrict__ fac,
         fac = fac + 1;
     }
 
+    // Store the rows in reverse order.
     for ( size_t i = 0; i < rows; ++i )
     for ( size_t j = 0; j < cols; ++j )
         *out++ = c[rows-1-i][j];
