@@ -318,99 +318,133 @@ void microkernel_float_avx::
 swap( const float *mat, const float *in,
             float *out, size_t k, bool pattern ) const noexcept
 {
-    __m256 c00, c01, c10, c11, c20, c21;
-    __m256 c30, c31, c40, c41, c50, c51;
-    __m256 b0, b1;                           
-    __m256 tmp0, tmp1;
-
-    c00 = c01 = c10 = c11 = c20 = c21 = _mm256_setzero_ps();
-    c30 = c31 = c40 = c41 = c50 = c51 = _mm256_setzero_ps();
-
+    if ( k == 0 ) return;
     bool k_odd = k &  1;
          k     = k >> 1;
-    while ( k-- )
-    {
-        // Even iteration
-        b0   = _mm256_load_ps(in+0);
-        b1   = _mm256_load_ps(in+8);
-        tmp0 = _mm256_broadcast_ss(mat+0);
-        tmp1 = _mm256_broadcast_ss(mat+1);
-        c00  = _mm256_fmadd_ps( b0, tmp0, c00 );
-        c01  = _mm256_fmadd_ps( b1, tmp0, c01 );
-        c20  = _mm256_fmadd_ps( b0, tmp1, c20 );
-        c21  = _mm256_fmadd_ps( b1, tmp1, c21 );
 
-        tmp0 = _mm256_broadcast_ss(mat+2);
-        c40  = _mm256_fmadd_ps( b0, tmp0, c40 );
-        c41  = _mm256_fmadd_ps( b1, tmp0, c41 );
+    __asm__ volatile
+    (
+        "                                        \n\t"
+        "vxorps   %%ymm0 ,%%ymm0, %%ymm0         \n\t"
+        "vxorps   %%ymm1 ,%%ymm1, %%ymm1         \n\t"
+        "vxorps   %%ymm2 ,%%ymm2, %%ymm2         \n\t"
+        "vxorps   %%ymm3 ,%%ymm3, %%ymm3         \n\t"
+        "vxorps   %%ymm4 ,%%ymm4, %%ymm4         \n\t"
+        "vxorps   %%ymm5 ,%%ymm5, %%ymm5         \n\t"
+        "vxorps   %%ymm6 ,%%ymm6, %%ymm6         \n\t"
+        "vxorps   %%ymm7 ,%%ymm7, %%ymm7         \n\t"
+        "vxorps   %%ymm8 ,%%ymm8, %%ymm8         \n\t"
+        "vxorps   %%ymm9 ,%%ymm9, %%ymm9         \n\t"
+        "vxorps   %%ymm10,%%ymm10,%%ymm10        \n\t"
+        "vxorps   %%ymm11,%%ymm11,%%ymm11        \n\t"
+        "                                        \n\t"
+        "testq    %[k], %[k]                     \n\t"
+        "jz       .Lcheckodd%=                   \n\t"
+        "                                        \n\t"
+        ".align 16                               \n\t"
+        ".Lloop%=:                               \n\t"
+        "                                        \n\t"
+        "vmovaps    (%[in]), %%ymm12             \n\t" // Even iteration.
+        "vmovaps  32(%[in]), %%ymm13             \n\t"
+        "                                        \n\t"
+        "vbroadcastss  (%[mat]),%%ymm14          \n\t"
+        "vbroadcastss 4(%[mat]),%%ymm15          \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm14,%%ymm0     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm14,%%ymm1     \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm15,%%ymm4     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm15,%%ymm5     \n\t"
+        "                                        \n\t"
+        "vbroadcastss 8(%[mat]),%%ymm14          \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm14,%%ymm8     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm14,%%ymm9     \n\t"
+        "                                        \n\t"
+        "vmovaps   64(%[in]), %%ymm12            \n\t" // Odd iteration.
+        "vmovaps   96(%[in]), %%ymm13            \n\t"
+        "addq    $128,%[in]                      \n\t"
+        "                                        \n\t"
+        "vbroadcastss 12(%[mat]),%%ymm14         \n\t"
+        "vbroadcastss 16(%[mat]),%%ymm15         \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm14,%%ymm2     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm14,%%ymm3     \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm15,%%ymm6     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm15,%%ymm7     \n\t"
+        "                                        \n\t"
+        "vbroadcastss 20(%[mat]),%%ymm14         \n\t"
+        "addq         $24,%[mat]                 \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm14,%%ymm10    \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm14,%%ymm11    \n\t"
+        "                                        \n\t"
+        "decq         %[k]                       \n\t"
+        "jnz          .Lloop%=                   \n\t"
+        "                                        \n\t"
+        ".Lcheckodd%=:                           \n\t" // Remaining even iteration, if applicable.
+        "testb        %[k_odd],%[k_odd]          \n\t"
+        "jz           .Lstoreresult%=            \n\t"
+        "vmovaps    (%[in]), %%ymm12             \n\t" // Even iteration.
+        "vmovaps  32(%[in]), %%ymm13             \n\t"
+        "                                        \n\t"
+        "vbroadcastss  (%[mat]),%%ymm14          \n\t"
+        "vbroadcastss 4(%[mat]),%%ymm15          \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm14,%%ymm0     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm14,%%ymm1     \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm15,%%ymm4     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm15,%%ymm5     \n\t"
+        "                                        \n\t"
+        "vbroadcastss 8(%[mat]),%%ymm14          \n\t"
+        "vfmadd231ps  %%ymm12,%%ymm14,%%ymm8     \n\t"
+        "vfmadd231ps  %%ymm13,%%ymm14,%%ymm9     \n\t"
+        "                                        \n\t"
+        "                                        \n\t"
+        ".Lstoreresult%=:                        \n\t"
+        "testb %[pattern],%[pattern]             \n\t"
+        "jz    .Lnegativepattern%=               \n\t"
+        "vmovaps     %%ymm0,    (%[out])         \n\t"
+        "vmovaps     %%ymm1,  32(%[out])         \n\t"
+        "vmovaps     %%ymm2,  64(%[out])         \n\t"
+        "vmovaps     %%ymm3,  96(%[out])         \n\t"
+        "vmovaps     %%ymm4, 128(%[out])         \n\t"
+        "vmovaps     %%ymm5, 160(%[out])         \n\t"
+        "vmovaps     %%ymm6, 192(%[out])         \n\t"
+        "vmovaps     %%ymm7, 224(%[out])         \n\t"
+        "vmovaps     %%ymm8, 256(%[out])         \n\t"
+        "vmovaps     %%ymm9, 288(%[out])         \n\t"
+        "vmovaps     %%ymm10,320(%[out])         \n\t"
+        "vmovaps     %%ymm11,352(%[out])         \n\t"
+        "jmp .Lfinish%=                          \n\t"
+        "                                        \n\t"
+        ".Lnegativepattern%=:                    \n\t"
+        "vmovaps     %%ymm2,    (%[out])         \n\t"
+        "vmovaps     %%ymm3,  32(%[out])         \n\t"
+        "vmovaps     %%ymm0,  64(%[out])         \n\t"
+        "vmovaps     %%ymm1,  96(%[out])         \n\t"
+        "vmovaps     %%ymm6, 128(%[out])         \n\t"
+        "vmovaps     %%ymm7, 160(%[out])         \n\t"
+        "vmovaps     %%ymm4, 192(%[out])         \n\t"
+        "vmovaps     %%ymm5, 224(%[out])         \n\t"
+        "vmovaps     %%ymm10,256(%[out])         \n\t"
+        "vmovaps     %%ymm11,288(%[out])         \n\t"
+        "vmovaps     %%ymm8, 320(%[out])         \n\t"
+        "vmovaps     %%ymm9, 352(%[out])         \n\t"
+        "                                        \n\t"
+        ".Lfinish%=:                             \n\t"
+        
+        
+        : // Output operands
+          [mat]     "+r"(mat),
+          [in]      "+r"(in),
+          [k]       "+r"(k)
 
-        mat = mat +  3;
-        in  = in  + 16;
+        : // Input  operands
+          [out]     "r"(out),
+          [pattern] "r"(pattern),
+          [k_odd]   "r"(k_odd)
 
-        // Odd iteration
-        b0   = _mm256_load_ps(in+0);
-        b1   = _mm256_load_ps(in+8);
-        tmp0 = _mm256_broadcast_ss(mat+0);
-        tmp1 = _mm256_broadcast_ss(mat+1);
-        c10  = _mm256_fmadd_ps( b0, tmp0, c10 );
-        c11  = _mm256_fmadd_ps( b1, tmp0, c11 );
-        c30  = _mm256_fmadd_ps( b0, tmp1, c30 );
-        c31  = _mm256_fmadd_ps( b1, tmp1, c31 );
-
-        tmp0 = _mm256_broadcast_ss(mat+2);
-        c50  = _mm256_fmadd_ps( b0, tmp0, c50 );
-        c51  = _mm256_fmadd_ps( b1, tmp0, c51 );
-
-        mat = mat +  3;
-        in  = in  + 16;
-    }
-
-    if ( k_odd )
-    {
-        b0   = _mm256_load_ps(in+0);
-        b1   = _mm256_load_ps(in+8);
-        tmp0 = _mm256_broadcast_ss(mat+0);
-        tmp1 = _mm256_broadcast_ss(mat+1);
-        c00  = _mm256_fmadd_ps( b0, tmp0, c00 );
-        c01  = _mm256_fmadd_ps( b1, tmp0, c01 );
-        c20  = _mm256_fmadd_ps( b0, tmp1, c20 );
-        c21  = _mm256_fmadd_ps( b1, tmp1, c21 );
-
-        tmp0 = _mm256_broadcast_ss(mat+2);
-        c40  = _mm256_fmadd_ps( b0, tmp0, c40 );
-        c41  = _mm256_fmadd_ps( b1, tmp0, c41 );
-    }
-
-    if ( pattern )
-    {
-        _mm256_store_ps( out   , c00 );
-        _mm256_store_ps( out+ 8, c01 );
-        _mm256_store_ps( out+16, c10 );
-        _mm256_store_ps( out+24, c11 );
-        _mm256_store_ps( out+32, c20 );
-        _mm256_store_ps( out+40, c21 );
-        _mm256_store_ps( out+48, c30 );
-        _mm256_store_ps( out+56, c31 );
-        _mm256_store_ps( out+64, c40 );
-        _mm256_store_ps( out+72, c41 );
-        _mm256_store_ps( out+80, c50 );
-        _mm256_store_ps( out+88, c51 );
-    }
-    else
-    {
-        _mm256_store_ps( out   , c10 );
-        _mm256_store_ps( out+ 8, c11 );
-        _mm256_store_ps( out+16, c00 );
-        _mm256_store_ps( out+24, c01 );
-        _mm256_store_ps( out+32, c30 );
-        _mm256_store_ps( out+40, c31 );
-        _mm256_store_ps( out+48, c20 );
-        _mm256_store_ps( out+56, c21 );
-        _mm256_store_ps( out+64, c50 );
-        _mm256_store_ps( out+72, c51 );
-        _mm256_store_ps( out+80, c40 );
-        _mm256_store_ps( out+88, c41 );
-    }
+        : // Clobbered registers
+          "ymm0" , "ymm1" , "ymm2" , "ymm3" ,
+          "ymm4" , "ymm5" , "ymm6" , "ymm7" ,
+          "ymm8" , "ymm9" , "ymm10", "ymm11",
+          "ymm12", "ymm13", "ymm14", "ymm15"
+    );
 }
 
 void microkernel_float_avx::
@@ -423,7 +457,19 @@ zm2l( const float* fac, const float* in,
     __asm__ volatile
     (
         "                                        \n\t"
-        "vzeroall                                \n\t"
+        "vxorps   %%ymm0 ,%%ymm0, %%ymm0         \n\t"
+        "vxorps   %%ymm1 ,%%ymm1, %%ymm1         \n\t"
+        "vxorps   %%ymm2 ,%%ymm2, %%ymm2         \n\t"
+        "vxorps   %%ymm3 ,%%ymm3, %%ymm3         \n\t"
+        "vxorps   %%ymm4 ,%%ymm4, %%ymm4         \n\t"
+        "vxorps   %%ymm5 ,%%ymm5, %%ymm5         \n\t"
+        "vxorps   %%ymm6 ,%%ymm6, %%ymm6         \n\t"
+        "vxorps   %%ymm7 ,%%ymm7, %%ymm7         \n\t"
+        "vxorps   %%ymm8 ,%%ymm8, %%ymm8         \n\t"
+        "vxorps   %%ymm9 ,%%ymm9, %%ymm9         \n\t"
+        "vxorps   %%ymm10,%%ymm10,%%ymm10        \n\t"
+        "vxorps   %%ymm11,%%ymm11,%%ymm11        \n\t"
+        "                                        \n\t"
         ".align 16                               \n\t"
         ".Lloop%=:                               \n\t" // do 
         "                                        \n\t" // {
@@ -516,7 +562,19 @@ zm2m( const float* fac, const float* in,
     __asm__ volatile
     (
         "                                        \n\t"
-        "vzeroall                                \n\t"
+        "vxorps   %%ymm0 ,%%ymm0, %%ymm0         \n\t"
+        "vxorps   %%ymm1 ,%%ymm1, %%ymm1         \n\t"
+        "vxorps   %%ymm2 ,%%ymm2, %%ymm2         \n\t"
+        "vxorps   %%ymm3 ,%%ymm3, %%ymm3         \n\t"
+        "vxorps   %%ymm4 ,%%ymm4, %%ymm4         \n\t"
+        "vxorps   %%ymm5 ,%%ymm5, %%ymm5         \n\t"
+        "vxorps   %%ymm6 ,%%ymm6, %%ymm6         \n\t"
+        "vxorps   %%ymm7 ,%%ymm7, %%ymm7         \n\t"
+        "vxorps   %%ymm8 ,%%ymm8, %%ymm8         \n\t"
+        "vxorps   %%ymm9 ,%%ymm9, %%ymm9         \n\t"
+        "vxorps   %%ymm10,%%ymm10,%%ymm10        \n\t"
+        "vxorps   %%ymm11,%%ymm11,%%ymm11        \n\t"
+        "                                        \n\t"
         ".align 16                               \n\t" 
         ".Lloop%=:                               \n\t" // do
         "                                        \n\t" // {
@@ -611,29 +669,31 @@ trans2swap_buf( const float *const *const real_in,
                       float *__restrict__ imag_out,
                       size_t n, size_t Pmax ) const noexcept
 {
+    using std::min;
     __m256 zeros = _mm256_setzero_ps();
-    for ( size_t m = 0; m <= n; ++m )
+
+    for ( size_t m = 0; m <= min(n,Pmax); ++m )
     {
-        if ( m < Pmax )
-        {
-            const float *__restrict__ rsrc = real_in[m] + (n-m)*16;
-            const float *__restrict__ isrc = imag_in[m] + (n-m)*16;
-            __m256 rtmp0 = _mm256_load_ps( rsrc     );
-            __m256 rtmp1 = _mm256_load_ps( rsrc + 8 );
-            __m256 itmp0 = _mm256_load_ps( isrc     );
-            __m256 itmp1 = _mm256_load_ps( isrc + 8 );
-            _mm256_store_ps( real_out    , rtmp0 );
-            _mm256_store_ps( real_out + 8, rtmp1 );
-            _mm256_store_ps( imag_out    , itmp0 );
-            _mm256_store_ps( imag_out + 8, itmp1 );
-        }
-        else
-        {
-            _mm256_store_ps( real_out    , zeros );
-            _mm256_store_ps( real_out + 8, zeros );
-            _mm256_store_ps( imag_out    , zeros );
-            _mm256_store_ps( imag_out + 8, zeros );
-        }
+        const float *__restrict__ rsrc = real_in[m] + (n-m)*16;
+        const float *__restrict__ isrc = imag_in[m] + (n-m)*16;
+        __m256 rtmp0 = _mm256_load_ps( rsrc     );
+        __m256 rtmp1 = _mm256_load_ps( rsrc + 8 );
+        __m256 itmp0 = _mm256_load_ps( isrc     );
+        __m256 itmp1 = _mm256_load_ps( isrc + 8 );
+        _mm256_store_ps( real_out    , rtmp0 );
+        _mm256_store_ps( real_out + 8, rtmp1 );
+        _mm256_store_ps( imag_out    , itmp0 );
+        _mm256_store_ps( imag_out + 8, itmp1 );
+        real_out += 16;
+        imag_out += 16;
+    }
+
+    for ( size_t m = min(n,Pmax); m <= n; ++m )
+    {
+        _mm256_store_ps( real_out    , zeros );
+        _mm256_store_ps( real_out + 8, zeros );
+        _mm256_store_ps( imag_out    , zeros );
+        _mm256_store_ps( imag_out + 8, zeros );
         real_out += 16;
         imag_out += 16;
     }
@@ -990,99 +1050,133 @@ void microkernel_double_avx::
 swap( const double *mat, const double *in,
             double *out, size_t k, bool pattern ) const noexcept
 {
-    __m256d c00, c01, c10, c11, c20, c21;
-    __m256d c30, c31, c40, c41, c50, c51;
-    __m256d b0, b1;                           
-    __m256d tmp0, tmp1;
-
-    c00 = c01 = c10 = c11 = c20 = c21 = _mm256_setzero_pd();
-    c30 = c31 = c40 = c41 = c50 = c51 = _mm256_setzero_pd();
-
+    if ( k == 0 ) return;
     bool k_odd = k &  1;
          k     = k >> 1;
-    while ( k-- )
-    {
-        // Even iteration
-        b0   = _mm256_load_pd(in+0);
-        b1   = _mm256_load_pd(in+4);
-        tmp0 = _mm256_broadcast_sd(mat+0);
-        tmp1 = _mm256_broadcast_sd(mat+1);
-        c00  = _mm256_fmadd_pd( b0, tmp0, c00 );
-        c01  = _mm256_fmadd_pd( b1, tmp0, c01 );
-        c20  = _mm256_fmadd_pd( b0, tmp1, c20 );
-        c21  = _mm256_fmadd_pd( b1, tmp1, c21 );
 
-        tmp0 = _mm256_broadcast_sd(mat+2);
-        c40  = _mm256_fmadd_pd( b0, tmp0, c40 );
-        c41  = _mm256_fmadd_pd( b1, tmp0, c41 );
+    __asm__ volatile
+    (
+        "                                        \n\t"
+        "vxorpd   %%ymm0 ,%%ymm0, %%ymm0         \n\t"
+        "vxorpd   %%ymm1 ,%%ymm1, %%ymm1         \n\t"
+        "vxorpd   %%ymm2 ,%%ymm2, %%ymm2         \n\t"
+        "vxorpd   %%ymm3 ,%%ymm3, %%ymm3         \n\t"
+        "vxorpd   %%ymm4 ,%%ymm4, %%ymm4         \n\t"
+        "vxorpd   %%ymm5 ,%%ymm5, %%ymm5         \n\t"
+        "vxorpd   %%ymm6 ,%%ymm6, %%ymm6         \n\t"
+        "vxorpd   %%ymm7 ,%%ymm7, %%ymm7         \n\t"
+        "vxorpd   %%ymm8 ,%%ymm8, %%ymm8         \n\t"
+        "vxorpd   %%ymm9 ,%%ymm9, %%ymm9         \n\t"
+        "vxorpd   %%ymm10,%%ymm10,%%ymm10        \n\t"
+        "vxorpd   %%ymm11,%%ymm11,%%ymm11        \n\t"
+        "                                        \n\t"
+        "testq    %[k], %[k]                     \n\t"
+        "jz       .Lcheckodd%=                   \n\t"
+        "                                        \n\t"
+        ".align 16                               \n\t"
+        ".Lloop%=:                               \n\t"
+        "                                        \n\t"
+        "vmovapd    (%[in]), %%ymm12             \n\t" // Even iteration.
+        "vmovapd  32(%[in]), %%ymm13             \n\t"
+        "                                        \n\t"
+        "vbroadcastsd  (%[mat]),%%ymm14          \n\t"
+        "vbroadcastsd 8(%[mat]),%%ymm15          \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm14,%%ymm0     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm14,%%ymm1     \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm15,%%ymm4     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm15,%%ymm5     \n\t"
+        "                                        \n\t"
+        "vbroadcastsd 16(%[mat]),%%ymm14         \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm14,%%ymm8     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm14,%%ymm9     \n\t"
+        "                                        \n\t"
+        "vmovapd   64(%[in]), %%ymm12            \n\t" // Odd iteration.
+        "vmovapd   96(%[in]), %%ymm13            \n\t"
+        "addq    $128,%[in]                      \n\t"
+        "                                        \n\t"
+        "vbroadcastsd 24(%[mat]),%%ymm14         \n\t"
+        "vbroadcastsd 32(%[mat]),%%ymm15         \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm14,%%ymm2     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm14,%%ymm3     \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm15,%%ymm6     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm15,%%ymm7     \n\t"
+        "                                        \n\t"
+        "vbroadcastsd 40(%[mat]),%%ymm14         \n\t"
+        "addq         $48,%[mat]                 \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm14,%%ymm10    \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm14,%%ymm11    \n\t"
+        "                                        \n\t"
+        "decq         %[k]                       \n\t"
+        "jnz          .Lloop%=                   \n\t"
+        "                                        \n\t"
+        ".Lcheckodd%=:                           \n\t" // Remaining even iteration, if applicable.
+        "testb        %[k_odd],%[k_odd]          \n\t"
+        "jz           .Lstoreresult%=            \n\t"
+        "vmovapd    (%[in]), %%ymm12             \n\t" // Even iteration.
+        "vmovapd  32(%[in]), %%ymm13             \n\t"
+        "                                        \n\t"
+        "vbroadcastsd  (%[mat]),%%ymm14          \n\t"
+        "vbroadcastsd 8(%[mat]),%%ymm15          \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm14,%%ymm0     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm14,%%ymm1     \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm15,%%ymm4     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm15,%%ymm5     \n\t"
+        "                                        \n\t"
+        "vbroadcastsd 16(%[mat]),%%ymm14         \n\t"
+        "vfmadd231pd  %%ymm12,%%ymm14,%%ymm8     \n\t"
+        "vfmadd231pd  %%ymm13,%%ymm14,%%ymm9     \n\t"
+        "                                        \n\t"
+        "                                        \n\t"
+        ".Lstoreresult%=:                        \n\t"
+        "testb %[pattern],%[pattern]             \n\t"
+        "jz    .Lnegativepattern%=               \n\t"
+        "vmovapd     %%ymm0,    (%[out])         \n\t"
+        "vmovapd     %%ymm1,  32(%[out])         \n\t"
+        "vmovapd     %%ymm2,  64(%[out])         \n\t"
+        "vmovapd     %%ymm3,  96(%[out])         \n\t"
+        "vmovapd     %%ymm4, 128(%[out])         \n\t"
+        "vmovapd     %%ymm5, 160(%[out])         \n\t"
+        "vmovapd     %%ymm6, 192(%[out])         \n\t"
+        "vmovapd     %%ymm7, 224(%[out])         \n\t"
+        "vmovapd     %%ymm8, 256(%[out])         \n\t"
+        "vmovapd     %%ymm9, 288(%[out])         \n\t"
+        "vmovapd     %%ymm10,320(%[out])         \n\t"
+        "vmovapd     %%ymm11,352(%[out])         \n\t"
+        "jmp .Lfinish%=                          \n\t"
+        "                                        \n\t"
+        ".Lnegativepattern%=:                    \n\t"
+        "vmovapd     %%ymm2,    (%[out])         \n\t"
+        "vmovapd     %%ymm3,  32(%[out])         \n\t"
+        "vmovapd     %%ymm0,  64(%[out])         \n\t"
+        "vmovapd     %%ymm1,  96(%[out])         \n\t"
+        "vmovapd     %%ymm6, 128(%[out])         \n\t"
+        "vmovapd     %%ymm7, 160(%[out])         \n\t"
+        "vmovapd     %%ymm4, 192(%[out])         \n\t"
+        "vmovapd     %%ymm5, 224(%[out])         \n\t"
+        "vmovapd     %%ymm10,256(%[out])         \n\t"
+        "vmovapd     %%ymm11,288(%[out])         \n\t"
+        "vmovapd     %%ymm8, 320(%[out])         \n\t"
+        "vmovapd     %%ymm9, 352(%[out])         \n\t"
+        "                                        \n\t"
+        ".Lfinish%=:                             \n\t"
+        
+        
+        : // Output operands
+          [mat]     "+r"(mat),
+          [in]      "+r"(in),
+          [k]       "+r"(k)
 
-        mat = mat + 3;
-        in  = in  + 8;
+        : // Input  operands
+          [out]     "r"(out),
+          [pattern] "r"(pattern),
+          [k_odd]   "r"(k_odd)
 
-        // Odd iteration
-        b0   = _mm256_load_pd(in+0);
-        b1   = _mm256_load_pd(in+4);
-        tmp0 = _mm256_broadcast_sd(mat+0);
-        tmp1 = _mm256_broadcast_sd(mat+1);
-        c10  = _mm256_fmadd_pd( b0, tmp0, c10 );
-        c11  = _mm256_fmadd_pd( b1, tmp0, c11 );
-        c30  = _mm256_fmadd_pd( b0, tmp1, c30 );
-        c31  = _mm256_fmadd_pd( b1, tmp1, c31 );
-
-        tmp0 = _mm256_broadcast_sd(mat+2);
-        c50  = _mm256_fmadd_pd( b0, tmp0, c50 );
-        c51  = _mm256_fmadd_pd( b1, tmp0, c51 );
-
-        mat = mat + 3;
-        in  = in  + 8;
-    }
-
-    if ( k_odd )
-    {
-        b0   = _mm256_load_pd(in+0);
-        b1   = _mm256_load_pd(in+4);
-        tmp0 = _mm256_broadcast_sd(mat+0);
-        tmp1 = _mm256_broadcast_sd(mat+1);
-        c00  = _mm256_fmadd_pd( b0, tmp0, c00 );
-        c01  = _mm256_fmadd_pd( b1, tmp0, c01 );
-        c20  = _mm256_fmadd_pd( b0, tmp1, c20 );
-        c21  = _mm256_fmadd_pd( b1, tmp1, c21 );
-
-        tmp0 = _mm256_broadcast_sd(mat+2);
-        c40  = _mm256_fmadd_pd( b0, tmp0, c40 );
-        c41  = _mm256_fmadd_pd( b1, tmp0, c41 );
-    }
-
-    if ( pattern )
-    {
-        _mm256_store_pd( out   , c00 );
-        _mm256_store_pd( out+ 4, c01 );
-        _mm256_store_pd( out+ 8, c10 );
-        _mm256_store_pd( out+12, c11 );
-        _mm256_store_pd( out+16, c20 );
-        _mm256_store_pd( out+20, c21 );
-        _mm256_store_pd( out+24, c30 );
-        _mm256_store_pd( out+28, c31 );
-        _mm256_store_pd( out+32, c40 );
-        _mm256_store_pd( out+36, c41 );
-        _mm256_store_pd( out+40, c50 );
-        _mm256_store_pd( out+44, c51 );
-    }
-    else
-    {
-        _mm256_store_pd( out   , c10 );
-        _mm256_store_pd( out+ 4, c11 );
-        _mm256_store_pd( out+ 8, c00 );
-        _mm256_store_pd( out+12, c01 );
-        _mm256_store_pd( out+16, c30 );
-        _mm256_store_pd( out+20, c31 );
-        _mm256_store_pd( out+24, c20 );
-        _mm256_store_pd( out+28, c21 );
-        _mm256_store_pd( out+32, c50 );
-        _mm256_store_pd( out+36, c51 );
-        _mm256_store_pd( out+40, c40 );
-        _mm256_store_pd( out+44, c41 );
-    }
+        : // Clobbered registers
+          "ymm0" , "ymm1" , "ymm2" , "ymm3" ,
+          "ymm4" , "ymm5" , "ymm6" , "ymm7" ,
+          "ymm8" , "ymm9" , "ymm10", "ymm11",
+          "ymm12", "ymm13", "ymm14", "ymm15"
+    );
 }
 
 void microkernel_double_avx::
@@ -1095,7 +1189,19 @@ zm2l( const double* fac, const double* in,
     __asm__ volatile
     (
         "                                        \n\t"
-        "vzeroall                                \n\t"
+        "vxorpd   %%ymm0 ,%%ymm0, %%ymm0         \n\t"
+        "vxorpd   %%ymm1 ,%%ymm1, %%ymm1         \n\t"
+        "vxorpd   %%ymm2 ,%%ymm2, %%ymm2         \n\t"
+        "vxorpd   %%ymm3 ,%%ymm3, %%ymm3         \n\t"
+        "vxorpd   %%ymm4 ,%%ymm4, %%ymm4         \n\t"
+        "vxorpd   %%ymm5 ,%%ymm5, %%ymm5         \n\t"
+        "vxorpd   %%ymm6 ,%%ymm6, %%ymm6         \n\t"
+        "vxorpd   %%ymm7 ,%%ymm7, %%ymm7         \n\t"
+        "vxorpd   %%ymm8 ,%%ymm8, %%ymm8         \n\t"
+        "vxorpd   %%ymm9 ,%%ymm9, %%ymm9         \n\t"
+        "vxorpd   %%ymm10,%%ymm10,%%ymm10        \n\t"
+        "vxorpd   %%ymm11,%%ymm11,%%ymm11        \n\t"
+        "                                        \n\t"
         ".align 16                               \n\t" 
         ".Lloop%=:                               \n\t" // do
         "                                        \n\t" // {
@@ -1188,7 +1294,19 @@ zm2m( const double* fac, const double* in,
     __asm__ volatile
     (
         "                                        \n\t"
-        "vzeroall                                \n\t"
+        "vxorpd   %%ymm0 ,%%ymm0, %%ymm0         \n\t"
+        "vxorpd   %%ymm1 ,%%ymm1, %%ymm1         \n\t"
+        "vxorpd   %%ymm2 ,%%ymm2, %%ymm2         \n\t"
+        "vxorpd   %%ymm3 ,%%ymm3, %%ymm3         \n\t"
+        "vxorpd   %%ymm4 ,%%ymm4, %%ymm4         \n\t"
+        "vxorpd   %%ymm5 ,%%ymm5, %%ymm5         \n\t"
+        "vxorpd   %%ymm6 ,%%ymm6, %%ymm6         \n\t"
+        "vxorpd   %%ymm7 ,%%ymm7, %%ymm7         \n\t"
+        "vxorpd   %%ymm8 ,%%ymm8, %%ymm8         \n\t"
+        "vxorpd   %%ymm9 ,%%ymm9, %%ymm9         \n\t"
+        "vxorpd   %%ymm10,%%ymm10,%%ymm10        \n\t"
+        "vxorpd   %%ymm11,%%ymm11,%%ymm11        \n\t"
+        "                                        \n\t"
         ".align 16                               \n\t" 
         ".Lloop%=:                               \n\t" // do
         "                                        \n\t" // {
@@ -1282,29 +1400,31 @@ trans2swap_buf( const double *const *const real_in,
                       double *__restrict__ imag_out,
                       size_t n, size_t Pmax ) const noexcept
 {
+    using std::min;
     __m256d zeros = _mm256_setzero_pd();
-    for ( size_t m = 0; m <= n; ++m )
+
+    for ( size_t m = 0; m <= min(n,Pmax); ++m )
     {
-        if ( m < Pmax )
-        {
-            const double *__restrict__ rsrc = real_in[m] + (n-m)*8;
-            const double *__restrict__ isrc = imag_in[m] + (n-m)*8;
-            __m256d rtmp0 = _mm256_load_pd( rsrc     );
-            __m256d rtmp1 = _mm256_load_pd( rsrc + 4 );
-            __m256d itmp0 = _mm256_load_pd( isrc     );
-            __m256d itmp1 = _mm256_load_pd( isrc + 4 );
-            _mm256_store_pd( real_out    , rtmp0 );
-            _mm256_store_pd( real_out + 4, rtmp1 );
-            _mm256_store_pd( imag_out    , itmp0 );
-            _mm256_store_pd( imag_out + 4, itmp1 );
-        }
-        else
-        {
-            _mm256_store_pd( real_out    , zeros );
-            _mm256_store_pd( real_out + 4, zeros );
-            _mm256_store_pd( imag_out    , zeros );
-            _mm256_store_pd( imag_out + 4, zeros );
-        }
+        const double *__restrict__ rsrc = real_in[m] + (n-m)*8;
+        const double *__restrict__ isrc = imag_in[m] + (n-m)*8;
+        __m256d rtmp0 = _mm256_load_pd( rsrc     );
+        __m256d rtmp1 = _mm256_load_pd( rsrc + 4 );
+        __m256d itmp0 = _mm256_load_pd( isrc     );
+        __m256d itmp1 = _mm256_load_pd( isrc + 4 );
+        _mm256_store_pd( real_out    , rtmp0 );
+        _mm256_store_pd( real_out + 4, rtmp1 );
+        _mm256_store_pd( imag_out    , itmp0 );
+        _mm256_store_pd( imag_out + 4, itmp1 );
+        real_out += 8;
+        imag_out += 8;
+    }
+
+    for ( size_t m = min(n,Pmax); m <= n; ++m )
+    {
+        _mm256_store_pd( real_out    , zeros );
+        _mm256_store_pd( real_out + 4, zeros );
+        _mm256_store_pd( imag_out    , zeros );
+        _mm256_store_pd( imag_out + 4, zeros );
         real_out += 8;
         imag_out += 8;
     }
