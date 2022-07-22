@@ -38,8 +38,10 @@ This release contains several improvements.
 - Fixed a bug with aligned_alloc on certain systems.
 - Expanded the user guide with a section on writing microkernels.
 - Added optimised implementation for ARMv8-A in double precision.
-- Some more minor optimisations in the AVX code for x86 CPUs. (Replaced 
-  vzeroall with vxorpd)
+- Some more minor optimisations in the AVX code for x86 CPUs.
+    - Replaced vzeroall with vxorpd
+    - Full assembly implementation of swap(), replacing the previously
+      used intrinsics-based version.
 - Added missing m4 macros for generating the build system using
   autoreconf --install
 
