@@ -19,10 +19,12 @@
  */
 #include <solidfmm/solid.hpp>
 
+#include <algorithm> // min, max
 #include <utility>   // swap
 #include <cstdlib>   // malloc,realloc,free
 #include <cstring>   // memcpy,memset
-#include <stdexcept> // bad_alloc, logic_error
+#include <stdexcept> // logic_error
+#include <new>       // bad_alloc
 
 #pragma GCC optimize("O2")
 #pragma GCC optimize("tree-vectorize")

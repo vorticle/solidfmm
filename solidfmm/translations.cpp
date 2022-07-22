@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2022 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -24,6 +24,7 @@
 #include <solidfmm/operator_data.hpp>
 #include <solidfmm/threadlocal_buffer.hpp>
 
+#include <algorithm> // For std::min
 #include <stdexcept>
 
 namespace solidfmm

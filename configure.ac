@@ -1,5 +1,4 @@
-AC_INIT([solidfmm],[1.2])
-AC_CANONICAL_SYSTEM
+AC_INIT([solidfmm],[1.3])
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([-Wall -Werror nostdinc dist-xz])

@@ -31,3 +31,15 @@ documented in the user guide.
 A very minor addition to the operator_handle interface: make_buffer() generates
 matching buffer_handles for the given operator_handle. 
 
+===============================================================================
+July 22nd, 2022: solidfmm-1.3.
+
+This release contains several improvements.
+- Fixed a bug with aligned_alloc on certain systems.
+- Expanded the user guide with a section on writing microkernels.
+- Added optimised implementation for ARMv8-A in double precision.
+- Some more minor optimisations in the AVX code for x86 CPUs. (Replaced 
+  vzeroall with vxorpd)
+- Added missing m4 macros for generating the build system using
+  autoreconf --install
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2022 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -318,7 +318,6 @@ void microkernel_float_avx::
 swap( const float *mat, const float *in,
             float *out, size_t k, bool pattern ) const noexcept
 {
-    if ( k == 0 ) return;
     bool k_odd = k &  1;
          k     = k >> 1;
 
@@ -1050,7 +1049,6 @@ void microkernel_double_avx::
 swap( const double *mat, const double *in,
             double *out, size_t k, bool pattern ) const noexcept
 {
-    if ( k == 0 ) return;
     bool k_odd = k &  1;
          k     = k >> 1;
 

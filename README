@@ -3,6 +3,8 @@
 
                                    README
 
+      **** You need the GNU Autotools to build the GitHub Release. **** 
+      ****         See the file INSTALL for instructions.          ****
       **** A detailed user guide can be found in the "doc" folder. ****
 
 ================================================================================
@@ -19,9 +21,11 @@ Installation instructions can be found in the user guide and the file INSTALL.
 LIST OF FEATURES:
 
     - Supports both single and double precision.
-    - Fully vectorised on x86 CPUs with AVX or AVX2 support.
     - Hand-written assembly implementations for maximal performance of critical
       parts.
+    - Fully vectorised on x86 CPUs with AVX and/or AVX-512F support.
+    - ARMv8-A CPUs: fully optimised in double precision arithmetic, the
+      single precision routines use the generic C code at the moment.
     - Supports mixed order translations: you can do M2M, M2L, L2L with
       differing input and output orders P. This is important for adaptive fast
       multipole codes.
@@ -66,12 +70,15 @@ as a four-fold nested loop, which is quite inefficient.
 
 solidfmm aims to change this situation. It provides highly optimised
 implementations of these operators and uses the accelerated, rotation-based
-O(P³) implementation. For x86 CPUs supporting the AVX or AVX2 instruction sets
-it provides maximally tuned implementations, which are partially hand-coded in
-assembly language for maximum performance. For all other architectures we
-provide a generic implementation, which is, however, much slower. If you are
-interested in the gritty details of the implementation, we refer to the future
-documentation and the paper, which are currently in preparation.
+O(P³) implementation. For x86 CPUs supporting the AVX or AVX-512F instruction
+sets it provides maximally tuned implementations, which are partially hand-coded 
+in assembly language for maximum performance. Optimised routines are also
+provided for ARMv8-A CPUs in double precision arithmetic. For all other
+architectures we provide a generic implementation, which is, however, slower.
+If you are interested in the gritty details of the implementation, we refer to
+the future documentation and the paper, which are currently in preparation.
+A descrpition on how to develop your own optimised routines is given in
+Chapter 4 of the documentation.
 
 IMPORTANT:
 If you need support for other common CPUs, please do not hesitate to contact me:
@@ -94,7 +101,9 @@ Acknowledgements.
 
 This work was created at the Institute for Applied and Computational Mechanics
 (ACOM) at RWTH Aachen University, Germany. I would like to express gratitude to
-my boss, who is very supportive.
+my boss, who is very supportive. Special thanks to my former colleague
+Aleksandr Mikhalev, who helped debugging and benchmarking the ARMv8-A 
+implementation.
 
 This research was carried out under funding of the German Research Foundation
 (DFG), project “Vortex Methods for Incompressible Flows”, number 432219818.

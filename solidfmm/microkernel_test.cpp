@@ -19,7 +19,8 @@
  */
 #include <solidfmm/microkernel_test.hpp>
 
-#include <cmath>
+#include <cmath>     // std::hypot, std::sqrt
+#include <algorithm> // For std::min
 
 namespace solidfmm
 {

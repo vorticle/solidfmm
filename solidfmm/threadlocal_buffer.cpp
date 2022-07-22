@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2022 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -26,6 +26,35 @@
 #include <utility> // for std::swap
 #include <cstring> // for std::memcpy
 #include <cstdlib> // for std::aligned_alloc
+
+namespace
+{
+
+// A "repaired" aligned_alloc.
+// - Alignment must be a power of two
+// - sizeof(void*) must also be a power of two
+// - size may be any iteger.
+void* repaired_aligned_alloc( size_t alignment, size_t size ) noexcept
+{
+    if ( size == 0 ) return nullptr;
+    
+    // On POSIX systems, the alignment must equal (2^k)*sizeof(void*) for some
+    // positive integer k. In other words, it must be a "power of two"-multiple
+    // of sizeof(void*).
+    //
+    // It is safe to assume that sizeof(void*) is itself a power of two on all
+    // modern systems. So the follwing simple check suffices. 
+    if ( alignment < sizeof(void*) )
+        alignment = sizeof(void*);
+
+    // The C++17 standard demands that the size we request is an integer
+    // multiple of the alignment parameter.
+    size_t factor = 1 + (size-1)/alignment;
+
+    return std::aligned_alloc( alignment, factor*alignment );
+}
+
+}
 
 namespace solidfmm
 {
@@ -105,7 +134,7 @@ void threadlocal_buffer<real>::init()
     bufsize += 2*P*(P+1);
 
     // Does the actual allocation.
-    void *mem = std::aligned_alloc( alignment, bufsize * sizeof(real) );
+    void *mem = repaired_aligned_alloc( alignment, bufsize * sizeof(real) );
     if ( mem == nullptr ) throw std::bad_alloc {};
     std::memset( mem, 0, bufsize * sizeof(real) );
     std::unique_ptr<real[],decltype(&std::free)> buf_ { reinterpret_cast<real*>(mem), &std::free };
@@ -183,7 +212,7 @@ threadlocal_buffer<real>::threadlocal_buffer( const threadlocal_buffer &rhs ):
 
     std::unique_ptr<real*[]> ptr_buf_ { new real*[4*P + 2*cols] };
 
-    void *mem = std::aligned_alloc( alignment, bufsize * sizeof(real) );
+    void *mem = repaired_aligned_alloc( alignment, bufsize * sizeof(real) );
     if ( mem == nullptr ) throw std::bad_alloc {};
     std::memcpy( mem, rhs.buf, bufsize * sizeof(real) );
     std::unique_ptr<real[],decltype(&std::free)> buf_ { reinterpret_cast<real*>(mem), std::free };

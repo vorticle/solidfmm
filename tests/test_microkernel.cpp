@@ -27,6 +27,7 @@
 #include <limits>
 #include <memory>
 #include <iostream>
+#include <algorithm> // For std::min
 
 
 ///////////////////////////////////////////////////
@@ -39,12 +40,12 @@ namespace solidfmm
 {
 
 // TODO: Write the floating point type you want to test here.
-using T = float;
+using T = double;
 
 // TODO: Have this function return the kernel you want to test.
 microkernel<T>* make_my_kernel() 
 {
-    return new microkernel_float_generic;
+    return new microkernel_double_generic;
 }
 
 }
