@@ -291,7 +291,6 @@ void test_euler( microkernel<T> *my_kernel, microkernel<T> *ref_kernel,
                  threadlocal_buffer<T> &my_buf, threadlocal_buffer<T> &ref_buf )
 {
     using std::abs;
-    const size_t rows = my_kernel->rows;
     const size_t cols = my_kernel->cols;
     random_real<T> rand(-1,1);
 
@@ -487,7 +486,6 @@ void test_rotscale( microkernel<T> *my_kernel, microkernel<T> *ref_kernel,
                     threadlocal_buffer<T> &my_buf, threadlocal_buffer<T> &ref_buf )
 {
     using std::abs;
-    const size_t rows = my_kernel->rows;
     const size_t cols = my_kernel->cols;
     random_real<T> rand(-1,1);
 
@@ -597,7 +595,6 @@ void test_swap2trans( microkernel<T> *my_kernel, microkernel<T>*,
                       threadlocal_buffer<T> &my_buf, threadlocal_buffer<T>& )
 {
     using std::abs;
-    const size_t rows = my_kernel->rows;
     const size_t cols = my_kernel->cols;
     random_real<T> rand(-1,1);
 
@@ -640,11 +637,10 @@ void test_swap2trans( microkernel<T> *my_kernel, microkernel<T>*,
 }
 
 // Checks if the copy operations work correctly.
-void test_trans2swap( microkernel<T> *my_kernel, microkernel<T> *ref_kernel,
+void test_trans2swap( microkernel<T> *my_kernel, 
                       threadlocal_buffer<T> &my_buf, threadlocal_buffer<T>& )
 {
     using std::abs;
-    const size_t rows = my_kernel->rows;
     const size_t cols = my_kernel->cols;
     random_real<T> rand(-1,1);
 
@@ -712,7 +708,6 @@ void test_solid2swap( microkernel<T> *my_kernel, microkernel<T> *ref_kernel,
                       threadlocal_buffer<T> &my_buf, threadlocal_buffer<T> &ref_buf )
 {
     using std::abs;
-    const size_t rows = my_kernel->rows;
     const size_t cols = my_kernel->cols;
     random_real<T> rand(-1,1);
 
@@ -771,7 +766,6 @@ void test_swap2solid( microkernel<T> *my_kernel, microkernel<T> *ref_kernel,
                      threadlocal_buffer<T> &my_buf, threadlocal_buffer<T> &ref_buf )
 {
     using std::abs;
-    const size_t rows = my_kernel->rows;
     const size_t cols = my_kernel->cols;
     random_real<T> rand(-1,1);
 
@@ -848,7 +842,7 @@ void test()
     test_euler      ( my_kernel.get(), ref_kernel.get(), my_buf, ref_buf );
     test_rotscale   ( my_kernel.get(), ref_kernel.get(), my_buf, ref_buf );
     test_swap2trans ( my_kernel.get(), ref_kernel.get(), my_buf, ref_buf );
-    test_trans2swap ( my_kernel.get(), ref_kernel.get(), my_buf, ref_buf );
+    test_trans2swap ( my_kernel.get(), my_buf, ref_buf );
     test_solid2swap ( my_kernel.get(), ref_kernel.get(), my_buf, ref_buf );
     test_swap2solid ( my_kernel.get(), ref_kernel.get(), my_buf, ref_buf );
 }

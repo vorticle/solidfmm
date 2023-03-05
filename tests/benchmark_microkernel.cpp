@@ -32,6 +32,9 @@ real swap_benchmark( size_t P );
 template <typename real>
 real zm2l_benchmark( size_t P );
 
+template <typename real>
+real zm2m_benchmark( size_t P );
+
 int main()
 {
     std::cout << "Swapping:\n";
@@ -40,9 +43,15 @@ int main()
 
     std::cout << std::endl;
 
-    std::cout << "z-Transition:\n";
+    std::cout << "z-Transition M2L:\n";
     std::cout << "GFLOP/s for single precision: " << zm2l_benchmark<float >(18)  << ".\n";
     std::cout << "GFLOP/s for double precision: " << zm2l_benchmark<double>(40)  << ".\n";
+    
+    std::cout << std::endl;
+
+    std::cout << "z-Transition M2M and L2L:\n";
+    std::cout << "GFLOP/s for single precision: " << zm2m_benchmark<float >(18)  << ".\n";
+    std::cout << "GFLOP/s for double precision: " << zm2m_benchmark<double>(40)  << ".\n";
 }
 
 template <typename real>
@@ -93,6 +102,33 @@ real zm2l_benchmark( size_t P )
     clock.reset();
     for ( size_t i = 0; i < trials; ++i )
         kernel->zm2l( op.faculties(), buf.trans_real_in[0], buf.trans_real_out[0], P, false );
+    real elapsed = clock.elapsed();
+
+    // Flop-count per trial: 2*m*n*k
+    size_t flops = trials * kernel->rows * kernel->cols * P * 2;
+
+    real rflops = static_cast<real>(flops);
+    real giga   = static_cast<real>(1e-9);
+   
+    return giga*rflops/elapsed;
+}
+
+template <typename real>
+real zm2m_benchmark( size_t P )
+{
+    stopwatch<real>          clock;
+    operator_data<real>      op (P);
+    threadlocal_buffer<real> buf(op);
+    const microkernel<real> *kernel { op.kernel() };
+
+    // Warm-up.
+    for ( size_t i = 0; i < 128; ++i )
+        kernel->zm2m( op.faculties(), buf.trans_real_in[0], buf.trans_real_out[0], P );
+
+    size_t trials = 1 << 24;
+    clock.reset();
+    for ( size_t i = 0; i < trials; ++i )
+        kernel->zm2m( op.faculties(), buf.trans_real_in[0], buf.trans_real_out[0], P );
     real elapsed = clock.elapsed();
 
     // Flop-count per trial: 2*m*n*k

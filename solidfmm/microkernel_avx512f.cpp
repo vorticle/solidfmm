@@ -20,9 +20,14 @@
 #include <solidfmm/microkernel_avx512f.hpp>
 
 #ifdef __x86_64__
+
+#ifdef __llvm__
+#pragma clang attribute push(__attribute__((target("avx512f"))), apply_to=any(function))
+#elif __GNUG__
 #pragma GCC target   ("avx512f")
 #pragma GCC optimize ("O2")
-#pragma clang attribute push(__attribute__((target("avx512f"))), apply_to=any(function))
+#endif
+
 
 #include <immintrin.h>
 #include <stdexcept>
@@ -2191,6 +2196,9 @@ solid2buf( const double *const *p_solids, const double *const zeros, const size_
 
 }
 
+#ifdef __llvm__
 #pragma clang attribute pop
+#endif
+
 #endif // Check for amd64
 

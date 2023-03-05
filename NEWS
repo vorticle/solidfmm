@@ -1,3 +1,14 @@
+March 5th, 2023:
+
+I changed jobs and left academia, solidfmm's main download source will
+now be GitHub.
+
+I added functionality to compute minimal bounding spheres. I am
+considering to add further functionality to solidfmm, potentially
+I will include a full FMM implementation. Next step will be an
+automatic scheduler for translations on multi-core machines.
+
+
 July 22nd, 2022:
 
 I will be leaving the university in October 2022. The recommended Download

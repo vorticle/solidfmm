@@ -20,9 +20,13 @@
 #include <solidfmm/microkernel_avx.hpp>
 
 #ifdef __x86_64__
+
+#ifdef __llvm__
+#pragma clang attribute push(__attribute__((target("avx,fma"))), apply_to=any(function))
+#elif __GNUG__
 #pragma GCC target   ("avx,fma")
 #pragma GCC optimize ("O2")
-#pragma clang attribute push(__attribute__((target("avx,fma"))), apply_to=any(function))
+#endif
 
 #include <immintrin.h>
 #include <stdexcept>
@@ -1599,6 +1603,9 @@ solid2buf( const double *const *p_solids, const double *const zeros, const size_
 
 }
 
+#ifdef __llvm__
 #pragma clang attribute pop
+#endif
+
 #endif // Check for amd64
 

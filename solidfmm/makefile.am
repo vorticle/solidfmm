@@ -1,14 +1,14 @@
 lib_LTLIBRARIES = libsolidfmm.la
-pkginclude_HEADERS = solid.hpp harmonics.hpp translations.hpp handles.hpp
+pkginclude_HEADERS = solid.hpp harmonics.hpp translations.hpp handles.hpp sphere.hpp 
 
 noinst_HEADERS = random.hpp stopwatch.hpp swap_matrix.hpp microkernel.hpp \
                  microkernel_avx.hpp microkernel_avx512f.hpp microkernel_generic.hpp \
                  microkernel_test.hpp microkernel_armv8a.hpp \
                  operator_data.hpp threadlocal_buffer.hpp 
 
-libsolidfmm_la_SOURCES = solid.cpp harmonics.cpp handles.cpp \
+libsolidfmm_la_SOURCES = solid.cpp harmonics.cpp handles.cpp sphere.cpp \
                          swap_matrix.cpp operator_data.cpp threadlocal_buffer.cpp \
                          microkernel.cpp microkernel_avx.cpp microkernel_avx512f.cpp microkernel_generic.cpp \
-                         microkernel_armv8a.cpp microkernel_test.cpp translations.cpp
-libsolidfmm_la_LDFLAGS = -version-info 2:0:2
+                         microkernel_armv8a.cpp microkernel_test.cpp translations.cpp 
+libsolidfmm_la_LDFLAGS = -version-info 3:0:3
 

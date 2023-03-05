@@ -45,3 +45,15 @@ This release contains several improvements.
 - Added missing m4 macros for generating the build system using
   autoreconf --install
 
+
+===============================================================================
+March 5th, 2023: solidfmm-1.4.
+
+- Added assembly implementation for single precision on ARMv8-A.
+- Improved the double precision zm2m and zm2l microkernel methods for ARMv8-A. 
+  On my Raspberry Pi they now deliver 98% of the theoratical peak performance.
+- Added sphere.hpp and sphere.cpp, lets you compute minimal bounding spheres.
+- Expanded benchmark_microkernel to also benchmark the zm2m routine.
+- Fixed typos in the documentation.
+- Code should now compile without warnings when using -Wall -Wextra
+

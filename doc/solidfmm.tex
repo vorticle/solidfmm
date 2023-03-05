@@ -3,7 +3,7 @@
 % !TeX encoding   = utf-8
 % !TeX spellcheck = en_GB
 %
-%    Copyright 2022 Matthias Kirchhart
+%    Copyright 2022, 2023 Matthias Kirchhart
 %
 %    Permission is granted to copy, distribute and/or modify this document
 %    under the terms of the GNU Free Documentation License, Version 1.3
@@ -54,7 +54,7 @@
   pdftitle           = {solidfmm},
   pdfkeywords        = {C++, library, fast multipole method, Solid harmonics},
   pdfencoding        = {unicode},
-  pdfcopyright       = {Copyright \textcopyright\ 2022 Matthias Kirchhart.
+  pdfcopyright       = {Copyright \textcopyright\ 2022, 2023 Matthias Kirchhart.
 Permission is granted to copy, distribute and/or modify this document under
 the terms of the ‘GNU Free Documentation License’, Version 1.3 or any
 later version published by the Free Software Foundation; with no Invariant
@@ -75,7 +75,7 @@ included in Appendix A of this work.},
 }
 
 \XMPLangAlt{x-default}{%
-pdfcopyright={Copyright \textcopyright\ 2022 Matthias Kirchhart.
+pdfcopyright={Copyright \textcopyright\ 2022, 2023 Matthias Kirchhart.
 Permission is granted to copy, distribute and/or modify this document under the
 terms of the ‘GNU Free Documentation License’, Version 1.3 or any later version
 published by the Free Software Foundation; with no Invariant Sections, Front-%
@@ -139,6 +139,7 @@ Appendix A of this work.}
 
 % Finally, our own commands.
 \newcommand{\solidfmm}{\texttt{solidfmm}}
+\newcommand{\solidfmmversion}{1.4}
 \newcommand{\PtoM}{\textsc{p2m}}
 \newcommand{\PtoL}{\textsc{p2l}}
 \newcommand{\MtoM}{\textsc{m2m}}
@@ -213,31 +214,26 @@ Appendix A of this work.}
 
 \subject{Documentation}
 \title{\solidfmm}
-\subtitle{Version 1.3}
+\subtitle{Version \solidfmmversion}
 \author{Matthias Kirchhart}
-\date{July 2022}
+\date{February 2023}
 
 \uppertitleback
 {%
-Dr.~Matthias Kirchhart\\
-Angewandte und Computergestützte Mathematik\\
-Rheinisch-Westfälische Technische Hochschule Aachen\\
-Schinkelstraße 2\\
-52062 Aachen\\
-Germany\\[\baselineskip]
+Dr.~Matthias Kirchhart\\[0.5cm]
 \begin{tabular}{@{}ll}
 E-mail:  &
 \texttt{%
 \href{mailto:kirchhart@acom.rwth-aachen.de}{kirchhart@acom.rwth-aachen.de}
 }\\
 Website: & 
-\url{http://www.acom.rwth-aachen.de/5people/kirchhart/start}
+\url{https://www.linkedin.com/in/matthiaskirchhart}
 \end{tabular}
 }
 
 \lowertitleback
 {%
-Copyright © 2022 Matthias Kirchhart.\\[1em]
+Copyright © 2022, 2023 Matthias Kirchhart.\\[1em]
 Permission is granted to copy, distribute and/or modify this document under the
 terms of the \enquote{GNU Free Documentation License}, Version 1.3 or any later
 version published by the Free Software Foundation; with no Invariant Sections,
@@ -315,39 +311,34 @@ LLVM.
 
 
 \subsection{Download Sources}
-\solidfmm\ is available from two alternative sources:
+\solidfmm\ is available from GitHub at
+\url{https://github.com/vorticle/solidfmm} in two forms
 \begin{enumerate}
-\item\emph{Recommended:} From my institution's cloud server at
-\url{https://rwth-aachen.sciebo.de/s/YIJFvSERVBiOkbc}.
-\item From GitHub at \url{https://github.com/vorticle/solidfmm}. This repository
-mostly exists to increase visibility and for the convenience of people who like
-GitHub. I do not use GitHub for development, as I host my repositories myself.
-Only the current releases will be pushed to this repository, without the
-development history or anything else. Please \emph{do not} send me pull requests
-or similar things via GitHub but contact me directly via E-mail. You will
-additionally need the GNU Autotools to use these releases.
+\item\emph{Recommended:} As so-called \enquote{tarballs}, i.\,e., compressed
+archives of the source code which come with the readily prepared configuration
+scripts. Additionally, digital signatures are provided to validate the
+authenticity of the code. You can find these releases under the
+\enquote{Releases} section on the GitHub project page, a little bit hidden on
+the right of the page.
+\item As a source repository which can be cloned using the \lstinline|git| 
+versioning tool. This repository does not contain the prepared configuration
+scripts; you will additionally need the GNU Autotools to generate these
+scripts from the source code.
 \end{enumerate}
 
-In this text we will focus on the first option. The cloud server directory
-contains all releases of \solidfmm\ as compressed \emph{tarballs}, which have
-file endings \lstinline|.tar.xz|. Additionally, for each release, there is a
-digital signature with ending \lstinline|.tar.xz.asc|. By default, you would
-choose the latest release and download both the tarball and the respective
-digital signature file. We will assume that you created a folder on your machine
-for these files and opened a shell there. If you download \solidfmm\ for the
-first time, you should also download the file 
-\lstinline|kirchhart_pubkey.gpg|, which contains my OpenPGP public key.
+We highly recommend the first option, as it is simpler to use and comes with
+the additional security benefit of digital signatures.
 
 \subsection{Verification (Optional)}
 The next step is to verify the authenticity of the downloaded files. For this
 you will need the GNU Privacy Guard, also known as GnuPG.\autocite{gnupg} Its
 executable is commonly called \lstinline|gpg|. It comes preinstalled by default
 on most current GNU/Linux distributions. Here we will only describe how to use
-this software to verify the authenticity of \solidfmm, a detailed user guide
-of \lstinline|gpg| is given on its project website. We will only describe the
-process for the tarball release, which is the recommended download option.
-For the GitHub release we assume that you have sufficient familiarity with
-\lstinline|git| to perform the verification yourself.
+this software to verify the authenticity of \solidfmm\ on GNU/Linux systems, a
+detailed user guide of \lstinline|gpg| is given on its project website. We will
+only describe the process for the tarball release, which is the recommended
+download option. For the GitHub release we assume that you have sufficient
+familiarity with \lstinline|git| to perform the verification yourself.
 
 
 \subsubsection{Setting up GnuPG}
@@ -362,7 +353,9 @@ gpg --gen-key
 and following the instructions on your screen. This a local procedure: no data
 is submitted to the internet and your privacy is preserved.
 
-Once you have your own keypair, you can import my key into GnuPG.
+Once you have your own keypair, you can import my key into GnuPG. My public
+key is included in the repository, it can be downloaded individually from
+GitHub.
 \begin{commandshell*}
 gpg --import kirchhart_pubkey.gpg
 \end{commandshell*}
@@ -382,9 +375,9 @@ sub   rsa4096 2012-11-02 [A]
 sub   rsa4096 2012-11-02 [E]
 \end{commandshell*}
 The long string of characters \enquote{BC55 D501 A8DC…} is my public key's
-fingerprint. You have to compare this fingerprint with the one given on
-my personal website on
-\url{http://www.acom.rwth-aachen.de/5people/kirchhart/start}.
+fingerprint. You have to compare this fingerprint with the one given in the
+\enquote{About} section on my LinkedIn page:
+\url{https://www.linkedin.com/in/matthiaskirchhart/}.
 \emph{Only if the two fingerprints match \textbf{completely}}, you have
 successfully imported my public key. If they do not match, something strange
 is going on and you should abort immediately, check your computer for viruses,
@@ -406,35 +399,36 @@ Once you set up GnuPG, verifying the tarball is easy. Simply run the following
 command in the folder into which you downloaded the tarball and the signature
 file. 
 \begin{commandshell*}
-gpg --verify solidfmm-1.3.tar.xz.asc solidfmm-1.3.tar.xz
+gpg --verify solidfmm-1.4.tar.xz.asc solidfmm-1.4.tar.xz
 \end{commandshell*}
 The output should contain a message stating that the signature is correct. If
 so, verification is complete. Otherwise you have downloaded compromised files
-and should abort \emph{immediately}. Replace the version number {1{.}3} with the
+and should abort \emph{immediately}. Replace the version number {1{.}4} with the
 version you downloaded in the above command, if necessary.
 
 \subsection{Unpacking the Tarball}
 Once you have downloaded and (optionally) verified the tarball, it can be
 unpacked as follows.
 \begin{commandshell*}
-tar Jxf solidfmm-1.3.tar.xz
+tar Jxf solidfmm-1.4.tar.xz
 \end{commandshell*}
 For this command to work, you will need \lstinline|tar|\autocite{gnutar} and the
 XZ utils\autocite{xzutils}, which come preinstalled by default on most current
-GNU/Linux systems. This should create a folder named \lstinline|solidfmm-1.3|,
+GNU/Linux systems. This should create a folder named \lstinline|solidfmm-1.4|,
 containing the source code of \solidfmm. Enter this folder by typing
 \begin{commandshell*}
-cd solidfmm-1.3
+cd solidfmm-1.4
 \end{commandshell*}
 
-\subsection{Preparing a GitHub Release}
-If you downloaded \solidfmm\ from GitHub instead, you will need the GNU
-Autotools to generate the build system and the necessary scripts.
+\subsection{Preparing a Cloned Repository}
+If you instead  downloaded \solidfmm\ from GitHub by cloning the repository
+using the \lstinline|git| versioning tool, you will need the GNU Autotools to
+generate the build system and the necessary scripts.
 \begin{commandshell*}
 autoreconf --install
 \end{commandshell*}
-After this compilation and installation instructions are identical to those
-for the tarball releases.
+After this the compilation and installation instructions in the next subsection
+also apply to the cloned repository.
 
 \subsection{Configuring and Compiling}
 \solidfmm\ uses the GNU Autotools to configure, build, and install the library.
@@ -716,6 +710,28 @@ for ( size_t i = 0; i < howmany; ++i )
 }
 \end{cppcode*}
 to set the order of the output expansions to \lstinline|P|.
+
+\subsection{Computing Minimal Bounding Spheres}
+Since \solidfmm\ version 1.4 we provide routines for computing minimal bounding
+spheres. These are useful in adaptive fast multipole codes to avoid being
+overly pessimistic in the multipole acceptance criterion. We provide
+two kinds of routines: one computes the minimal bounding sphere of a set 
+of points; the other routine can be used to compute the minimal bounding sphere
+of a set of spheres. To use these routines, include the following
+short, self-explanatory header:
+\begin{cppcode*}
+#include <solidfmm/sphere.hpp>
+\end{cppcode*}
+
+The routines in this header implement an algorithm by Fischer and
+Gärtner.\autocite{fischer2004} The theoretical complexity of this algorithm is
+rather high. However, just like Fischer and Gärtner, in our experiments we
+found that the \emph{empirical complexity is linear in the number points or
+spheres}. This implementation is particularly tuned for three-dimensional
+space; in our experiments it was faster than the more general CGAL
+implementation\footnote{\url{%
+https://doc.cgal.org/latest/Bounding_volumes/classCGAL_1_1Min__sphere__d.html}}
+and also provided more accurate results in floating point arithmetic.
 
 
 \chapter{Mathematical Background}\label{chp:mathbackground}
@@ -2603,7 +2619,7 @@ Next you need to write the actual implementation of your microkernel in the
 freshly created \lstinline|microkernel_aicpu.cpp| file. For this, we refer to
 the specification of the individual routines in the previous sections.
 
-It is a good strategy to start with te generic implementations from
+It is a good strategy to start with the generic implementations from
 \lstinline|microkernel_generic.cpp| and start replacing the individual
 routines with optimised versions one by one. It is also worth looking
 at or the other optimised implementations for an inspiration.
@@ -2615,7 +2631,7 @@ about its existence. For this you need to edit the file
 \lstinline|noinst_HEADERS| and add the header \lstinline|microkernel_aicpu.hpp|
 to the list. Next, add the \lstinline|microkernel_aicpu.cpp| to the line
 beginning with\\ \lstinline|libsolidfmm_la_SOURCES|. Lastly, you should increase
-the last digit of the \enquote{version-info} in the last line of the
+the first and last digits of the \enquote{version-info} in the last line of the
 \lstinline|makefile.am|. The result should look similar to the following.
 \begin{commandshell*}
 # Do not touch the following two lines.

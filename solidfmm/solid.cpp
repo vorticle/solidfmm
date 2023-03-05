@@ -26,8 +26,10 @@
 #include <stdexcept> // logic_error
 #include <new>       // bad_alloc
 
+#if !__llvm__ && __GNUG__
 #pragma GCC optimize("O2")
 #pragma GCC optimize("tree-vectorize")
+#endif
 
 namespace solidfmm
 {

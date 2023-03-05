@@ -78,6 +78,7 @@ int main()
 template <typename real>
 real benchmark( size_t P )
 {
+    int PP = P;
     solid<real>              L[128], M[128];
     stopwatch<real>          clock;
     
@@ -97,11 +98,11 @@ real benchmark( size_t P )
     {
         solid<real> trans = harmonics::S<real>(2*P,x[i],y[i],z[i]);
 
-        for ( int n = 0; n < P; ++n )
+        for ( int n = 0; n <PP; ++n )
         for ( int m = 0; m <=n; ++m )
         {
             std::complex<real> tmp {};
-            for ( int k = 0; k < P; ++k )
+            for ( int k = 0; k <PP; ++k )
             for ( int l =-k; l <=k; ++l )
             {
                 tmp += conj(get(M[i],k,l)) * get(trans,n+k,m+l);
@@ -122,11 +123,11 @@ real benchmark( size_t P )
     {
         solid<real> trans = harmonics::S<real>(2*P,x[i],y[i],z[i]);
 
-        for ( int n = 0; n < P; ++n )
+        for ( int n = 0; n <PP; ++n )
         for ( int m = 0; m <=n; ++m )
         {
             std::complex<real> tmp {};
-            for ( int k = 0; k < P; ++k )
+            for ( int k = 0; k <PP; ++k )
             for ( int l =-k; l <=k; ++l )
             {
                 tmp += conj(get(M[i],k,l)) * get(trans,n+k,m+l);

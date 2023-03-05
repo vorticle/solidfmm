@@ -5,16 +5,16 @@
 
 DETAILED DOCUMENTATION IN THE "doc" FOLDER!!
 
-PREPARING A GITHUB RELEASE:
-If you downloaded solidfmm from GitHub: additional steps are necessary: yo
-need to install the GNU Autotools: autoconf, automake and libtool.  You can
-then generate the configure scripts by running the following command in the
-project folder:
+PREPARING A CLONED REPOSITORY:
+If you downloaded solidfmm by cloning the GitHub repository: additional steps
+are necessary. You need to install the GNU Autotools: autoconf, automake and
+libtool.  You can then generate the configure scripts by running the following
+command in the project folder:
 
 autoreconf --install
 
-This is not necessary if you downloaded solidfmm from my university's
-cloud server.
+This is not necessary if you downloaded prepared tarballs, they can be
+found in the "Releases" section on the right of the GitHub page.
 
 To compile and install solidfmm you will need a fairly recent version of the
 GNU Compiler Collection (GCC) *or* LLVM (clang) with support for C++17. 

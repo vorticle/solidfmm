@@ -33,7 +33,6 @@ microkernel_test<real>::euler( const real *x,   const real *y, const real *z,
                                      real *cos_beta,  real *sin_beta,
                                      size_t k ) const noexcept
 {
-    const size_t rows = this->rows;
     const size_t cols = this->cols;
 
     if ( k )
@@ -94,7 +93,6 @@ rotscale( const real *cos, const real *sin,      const real *scale,
                                  real *real_out,       real *imag_out,
                              size_t k, bool forward ) const noexcept
 {
-    const size_t rows = this->rows;
     const size_t cols = this->cols;
 
     if ( forward )
@@ -291,7 +289,6 @@ swap2trans_buf( const real  *real_in,  const real  *imag_in,
                       real **real_out,       real **imag_out,
                       size_t n ) const noexcept 
 {
-    const size_t rows = this->rows;
     const size_t cols = this->cols;
 
     for ( size_t m = 0; m <= n;    ++m )
@@ -310,7 +307,6 @@ trans2swap_buf( const real *const *const real_in,
                       size_t n, size_t Pmax ) const noexcept
 {
     using std::min;
-    const size_t rows = this->rows;
     const size_t cols = this->cols;
 
     // First the entries where m < Pmax
@@ -335,7 +331,6 @@ void microkernel_test<real>::
 solid2buf( const real *const *p_solids, const real *const zeros, const size_t *P,
                  real *real_out, real *imag_out, size_t n ) const noexcept
 {
-    const size_t rows = this->rows;
     const size_t cols = this->cols;
     real** solids = new real*[ cols ];
 
@@ -362,7 +357,6 @@ void microkernel_test<real>::
 buf2solid( const real *real_in, const real *imag_in, 
                  real **p_solids, real *trash, const size_t *P, size_t n ) const noexcept
 {
-    const size_t rows = this->rows;
     const size_t cols = this->cols;
     real** solids = new real*[ cols ];
 

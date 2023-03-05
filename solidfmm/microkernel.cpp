@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021, 2022 Matthias Kirchhart
+ * Copyright (C) 2021, 2022, 2023 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -39,6 +39,10 @@ microkernel<float>* get_microkernel<float>()
          if ( microkernel_float_avx512f::available() ) return new microkernel_float_avx512f;
     else if ( microkernel_float_avx    ::available() ) return new microkernel_float_avx;
     else return new microkernel_float_generic;
+
+#elif SOLIDFMM_ARMv8A
+
+    return new microkernel_float_armv8a;
 
 #else
 

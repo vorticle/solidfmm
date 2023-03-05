@@ -3,7 +3,7 @@
 
                                    README
 
-      **** You need the GNU Autotools to build the GitHub Release. **** 
+      **** You need the GNU Autotools if you clone the repository. **** 
       ****         See the file INSTALL for instructions.          ****
       **** A detailed user guide can be found in the "doc" folder. ****
 
@@ -24,8 +24,8 @@ LIST OF FEATURES:
     - Hand-written assembly implementations for maximal performance of critical
       parts.
     - Fully vectorised on x86 CPUs with AVX and/or AVX-512F support.
-    - ARMv8-A CPUs: fully optimised in double precision arithmetic, the
-      single precision routines use the generic C code at the moment.
+    - Fully vectorised on ARMv8-A CPUs using ASIMD (NEON).
+    - Support for computing minimal bounding spheres.
     - Supports mixed order translations: you can do M2M, M2L, L2L with
       differing input and output orders P. This is important for adaptive fast
       multipole codes.
