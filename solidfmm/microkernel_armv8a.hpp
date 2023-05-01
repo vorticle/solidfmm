@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Matthias Kirchhart
+ * Copyright (C) 2022, 2023 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -20,7 +20,7 @@
 #ifndef SOLIDFMM_MICROKERNEL_ARMV8A_HPP
 #define SOLIDFMM_MICROKERNEL_ARMV8A_HPP
 
-#if __ARM_ARCH >= 8 && __ARM_ARCH < 900 && __ARM_ARCH_PROFILE == 'A' && __ARM_ARCH_ISA_A64 
+#if __ARM_ARCH >= 8 && __ARM_ARCH_PROFILE == 'A' && __ARM_ARCH_ISA_A64 
 #define SOLIDFMM_ARMv8A 1
 #endif
 

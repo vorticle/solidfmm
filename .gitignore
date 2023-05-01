@@ -27,6 +27,7 @@ autom4te.cache
 ar-lib
 libtool
 ltmain.sh
+solidfmm.pc
 m4/libtool.m4
 m4/ltoptions.m4
 m4/ltsugar.m4
@@ -57,4 +58,5 @@ tests/benchmark_m2l
 tests/benchmark_m2l_naive
 tests/benchmark_l2l
 tests/benchmark_microkernel
+tests/benchmark_multithreaded_translator
 

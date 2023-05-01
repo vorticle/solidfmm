@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021, 2022 Matthias Kirchhart
+ * Copyright (C) 2021, 2022, 2023 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -689,6 +689,71 @@ void m2l( const operator_data<double> &op, threadlocal_buffer<double> &buf,
     }
 }
 
+void m2l( const operator_data<float> &op, threadlocal_buffer<float> &buf,
+          const translation_info<float> *begin, const translation_info<float> *end )
+{
+    if ( buf.compatible(op) == false )
+        throw std::logic_error { "solidfmm::m2l<float>(): operator data and buffer incompatible" };
+
+    for ( const translation_info<float> *i = begin; i != end; ++i )
+    {
+        if ( i->source->dimension() != i->target->dimension() )
+            throw std::logic_error { "solidfmm::m2l<float>(): dimension mismatch." };
+
+        if ( i->source->order() > op.order() || i->target->order() > op.order() )
+            throw std::out_of_range { "solidfmm::m2l<float>(): orders exceeding operator data." };
+    }
+
+    m2l_unchecked(op,buf,begin,end);
+}
+
+void m2l_unchecked( const operator_data<float> &op, threadlocal_buffer<float> &buf,
+                    const translation_info<float> *begin, const translation_info<float> *end ) noexcept
+{
+    m2l_queue<float> queue(op,buf);
+    for ( const translation_info<float> *i = begin; i != end; ++i )
+    {
+        for ( size_t d = 0; d < i->source->dimension(); ++d )
+        {
+            queue.push( &(i->source->re(0,0,d)), i->source->order(),
+                        &(i->target->re(0,0,d)), i->target->order(),
+                        i->x, i->y, i->z );
+        }
+    }
+}
+
+void m2l( const operator_data<double> &op, threadlocal_buffer<double> &buf,
+          const translation_info<double> *begin, const translation_info<double> *end )
+{
+    if ( buf.compatible(op) == false )
+        throw std::logic_error { "solidfmm::m2l<double>(): operator data and buffer incompatible" };
+
+    for ( const translation_info<double> *i = begin; i != end; ++i )
+    {
+        if ( i->source->dimension() != i->target->dimension() )
+            throw std::logic_error { "solidfmm::m2l<double>(): dimension mismatch." };
+
+        if ( i->source->order() > op.order() || i->target->order() > op.order() )
+            throw std::out_of_range { "solidfmm::m2l<double>(): orders exceeding operator data." };
+    }
+
+    m2l_unchecked(op,buf,begin,end);
+}
+
+void m2l_unchecked( const operator_data<double> &op, threadlocal_buffer<double> &buf,
+                    const translation_info<double> *begin, const translation_info<double> *end ) noexcept
+{
+    m2l_queue<double> queue(op,buf);
+    for ( const translation_info<double> *i = begin; i != end; ++i )
+    {
+        for ( size_t d = 0; d < i->source->dimension(); ++d )
+        {
+            queue.push( &(i->source->re(0,0,d)), i->source->order(),
+                        &(i->target->re(0,0,d)), i->target->order(),
+                        i->x, i->y, i->z );
+        }
+    }
+}
 
 void m2m( const operator_data<float> &op, threadlocal_buffer<float> &buf,
           size_t howmany, const solid<float> *const *const Min, solid<float> *const *const Mout,
@@ -748,6 +813,72 @@ void m2m( const operator_data<double> &op, threadlocal_buffer<double> &buf,
     }
 }
 
+void m2m( const operator_data<float> &op, threadlocal_buffer<float> &buf,
+          const translation_info<float> *begin, const translation_info<float> *end )
+{
+    if ( buf.compatible(op) == false )
+        throw std::logic_error { "solidfmm::m2m<float>(): operator data and buffer incompatible" };
+
+    for ( const translation_info<float> *i = begin; i != end; ++i )
+    {
+        if ( i->source->dimension() != i->target->dimension() )
+            throw std::logic_error { "solidfmm::m2m<float>(): dimension mismatch." };
+
+        if ( i->source->order() > op.order() || i->target->order() > op.order() )
+            throw std::out_of_range { "solidfmm::m2m<float>(): orders exceeding operator data." };
+    }
+
+    m2m_unchecked(op,buf,begin,end);
+}
+
+void m2m_unchecked( const operator_data<float> &op, threadlocal_buffer<float> &buf,
+                    const translation_info<float> *begin, const translation_info<float> *end ) noexcept
+{
+    m2m_queue<float> queue(op,buf);
+    for ( const translation_info<float> *i = begin; i != end; ++i )
+    {
+        for ( size_t d = 0; d < i->source->dimension(); ++d )
+        {
+            queue.push( &(i->source->re(0,0,d)), i->source->order(),
+                        &(i->target->re(0,0,d)), i->target->order(),
+                        i->x, i->y, i->z );
+        }
+    }
+}
+
+void m2m( const operator_data<double> &op, threadlocal_buffer<double> &buf,
+          const translation_info<double> *begin, const translation_info<double> *end )
+{
+    if ( buf.compatible(op) == false )
+        throw std::logic_error { "solidfmm::m2m<double>(): operator data and buffer incompatible" };
+
+    for ( const translation_info<double> *i = begin; i != end; ++i )
+    {
+        if ( i->source->dimension() != i->target->dimension() )
+            throw std::logic_error { "solidfmm::m2m<double>(): dimension mismatch." };
+
+        if ( i->source->order() > op.order() || i->target->order() > op.order() )
+            throw std::out_of_range { "solidfmm::m2m<double>(): orders exceeding operator data." };
+    }
+
+    m2m_unchecked(op,buf,begin,end);
+}
+
+void m2m_unchecked( const operator_data<double> &op, threadlocal_buffer<double> &buf,
+                    const translation_info<double> *begin, const translation_info<double> *end ) noexcept
+{
+    m2m_queue<double> queue(op,buf);
+    for ( const translation_info<double> *i = begin; i != end; ++i )
+    {
+        for ( size_t d = 0; d < i->source->dimension(); ++d )
+        {
+            queue.push( &(i->source->re(0,0,d)), i->source->order(),
+                        &(i->target->re(0,0,d)), i->target->order(),
+                        i->x, i->y, i->z );
+        }
+    }
+}
+
 void l2l( const operator_data<float> &op, threadlocal_buffer<float> &buf,
           size_t howmany, const solid<float> *const *const Lin, solid<float> *const *const Lout,
           const float *x, const float *y, const float *z )
@@ -800,6 +931,71 @@ void l2l( const operator_data<double> &op, threadlocal_buffer<double> &buf,
             queue.push( &(Lin [i]->re(0,0,d)), Lin [i]->order(),
                         &(Lout[i]->re(0,0,d)), Lout[i]->order(),
                         x[i], y[i], z[i] );
+        }
+    }
+}
+
+void l2l( const operator_data<float> &op, threadlocal_buffer<float> &buf,
+          const translation_info<float> *begin, const translation_info<float> *end )
+{
+    if ( buf.compatible(op) == false )
+        throw std::logic_error { "solidfmm::l2l<float>(): operator data and buffer incompatible" };
+
+    for ( const translation_info<float> *i = begin; i != end; ++i )
+    {
+        if ( i->source->dimension() != i->target->dimension() )
+            throw std::logic_error { "solidfmm::l2l<float>(): dimension mismatch." };
+
+        if ( i->source->order() > op.order() || i->target->order() > op.order() )
+            throw std::out_of_range { "solidfmm::l2l<float>(): orders exceeding operator data." };
+    }
+    l2l_unchecked(op,buf,begin,end);
+}
+
+void l2l_unchecked( const operator_data<float> &op, threadlocal_buffer<float> &buf,
+                    const translation_info<float> *begin, const translation_info<float> *end ) noexcept
+{
+    l2l_queue<float> queue(op,buf);
+    for ( const translation_info<float> *i = begin; i != end; ++i )
+    {
+        for ( size_t d = 0; d < i->source->dimension(); ++d )
+        {
+            queue.push( &(i->source->re(0,0,d)), i->source->order(),
+                        &(i->target->re(0,0,d)), i->target->order(),
+                        i->x, i->y, i->z );
+        }
+    }
+}
+
+void l2l( const operator_data<double> &op, threadlocal_buffer<double> &buf,
+          const translation_info<double> *begin, const translation_info<double> *end )
+{
+    if ( buf.compatible(op) == false )
+        throw std::logic_error { "solidfmm::l2l<double>(): operator data and buffer incompatible" };
+
+    for ( const translation_info<double> *i = begin; i != end; ++i )
+    {
+        if ( i->source->dimension() != i->target->dimension() )
+            throw std::logic_error { "solidfmm::l2l<double>(): dimension mismatch." };
+
+        if ( i->source->order() > op.order() || i->target->order() > op.order() )
+            throw std::out_of_range { "solidfmm::l2l<double>(): orders exceeding operator data." };
+    }
+
+    l2l_unchecked(op,buf,begin,end);
+}
+
+void l2l_unchecked( const operator_data<double> &op, threadlocal_buffer<double> &buf,
+                    const translation_info<double> *begin, const translation_info<double> *end ) noexcept
+{
+    l2l_queue<double> queue(op,buf);
+    for ( const translation_info<double> *i = begin; i != end; ++i )
+    {
+        for ( size_t d = 0; d < i->source->dimension(); ++d )
+        {
+            queue.push( &(i->source->re(0,0,d)), i->source->order(),
+                        &(i->target->re(0,0,d)), i->target->order(),
+                        i->x, i->y, i->z );
         }
     }
 }

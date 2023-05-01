@@ -17,11 +17,13 @@ This is not necessary if you downloaded prepared tarballs, they can be
 found in the "Releases" section on the right of the GitHub page.
 
 To compile and install solidfmm you will need a fairly recent version of the
-GNU Compiler Collection (GCC) *or* LLVM (clang) with support for C++17. 
+GNU Compiler Collection (GCC) *or* LLVM (clang) *or* the Intel Compiler (icpx)
+with support for C++20.
+
+You will also need hwloc, both the library and its header files.
 
 Apart from this, on Unix systems you will only need the standard development
-tools, i.e., a shell, make, etc. There are no external library dependencies
-except for the standard C++ library. It should also be possible to compile
+tools, i.e., a shell, make, etc. It should also be possible to compile
 under Windows using Cygwin or MinGW, but I have not tested this.
 
 Compiling and installing should then be as simple as 

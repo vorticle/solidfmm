@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Matthias Kirchhart
+ * Copyright (C) 2021, 2023 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -29,8 +29,8 @@ template <typename real>
 class stopwatch
 {
 public:
-	void reset();
-	real elapsed();
+	void reset() noexcept;
+	real elapsed() const noexcept;
 
 private:
 	using clock = std::chrono::high_resolution_clock;
@@ -39,13 +39,13 @@ private:
 
 
 template <typename real> inline
-void stopwatch<real>::reset()
+void stopwatch<real>::reset() noexcept
 {
 	t0 = clock::now();
 }
 
 template <typename real> inline
-real stopwatch<real>::elapsed()
+real stopwatch<real>::elapsed() const noexcept
 {
 	using seconds = std::chrono::duration<real,std::ratio<1,1>>;
 

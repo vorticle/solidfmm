@@ -1,17 +1,42 @@
 ===============================================================================
-October 29th, 2021: solidfmm-1.0.
+May 1st, 2023: solidfmm-1.5.
 
-Initial Release of solidfmm.
+- Added a multithreaded_translator for easy parallelisation of translations.
+- Introduced a dependency on hwloc, also require C++20 support now.
+  Unfortunately, this is necessary for the multithreaded_translator.
+- Changed to a non-recursive build-system, added support for pkg-config.
+- Accelerated ASIMD (NEON) kernels should now also run on ARMv9-A systems.
+  Before I excluded ARMv9-A in the preprocessor macros due to fears of
+  incompatibility, but it seems that ARMv9-A is compatible with ARMv8-A.
+  Due to lack of hardware access, I cannot test this. 
+- Updated the documentation and reversed chronological order of *this* file ;) 
 
 
 ===============================================================================
-November 9th, 2021: solidfmm-1.1.
+March 5th, 2023: solidfmm-1.4.
 
-Added support for AVX-512. Double precision versions of both AVX and AVX-512
-now use a different algorithm for reading solids into the thread local buffers
-and back. In effect, the necessary matrix transposition is done in a vectorised
-fashion in the processor registers now. At P = 20 this trick gives about
-15-20% increase in performance.
+- Added assembly implementation for single precision on ARMv8-A.
+- Improved the double precision zm2m and zm2l microkernel methods for ARMv8-A. 
+  On my Raspberry Pi they now deliver 98% of the theoratical peak performance.
+- Added sphere.hpp and sphere.cpp, lets you compute minimal bounding spheres.
+- Expanded benchmark_microkernel to also benchmark the zm2m routine.
+- Fixed typos in the documentation.
+- Code should now compile without warnings when using -Wall -Wextra
+
+
+===============================================================================
+July 22nd, 2022: solidfmm-1.3.
+
+This release contains several improvements.
+- Fixed a bug with aligned_alloc on certain systems.
+- Expanded the user guide with a section on writing microkernels.
+- Added optimised implementation for ARMv8-A in double precision.
+- Some more minor optimisations in the AVX code for x86 CPUs.
+    - Replaced vzeroall with vxorpd
+    - Full assembly implementation of swap(), replacing the previously
+      used intrinsics-based version.
+- Added missing m4 macros for generating the build system using
+  autoreconf --install
 
 
 ===============================================================================
@@ -31,29 +56,19 @@ documented in the user guide.
 A very minor addition to the operator_handle interface: make_buffer() generates
 matching buffer_handles for the given operator_handle. 
 
-===============================================================================
-July 22nd, 2022: solidfmm-1.3.
 
-This release contains several improvements.
-- Fixed a bug with aligned_alloc on certain systems.
-- Expanded the user guide with a section on writing microkernels.
-- Added optimised implementation for ARMv8-A in double precision.
-- Some more minor optimisations in the AVX code for x86 CPUs.
-    - Replaced vzeroall with vxorpd
-    - Full assembly implementation of swap(), replacing the previously
-      used intrinsics-based version.
-- Added missing m4 macros for generating the build system using
-  autoreconf --install
+===============================================================================
+November 9th, 2021: solidfmm-1.1.
+
+Added support for AVX-512. Double precision versions of both AVX and AVX-512
+now use a different algorithm for reading solids into the thread local buffers
+and back. In effect, the necessary matrix transposition is done in a vectorised
+fashion in the processor registers now. At P = 20 this trick gives about
+15-20% increase in performance.
+
 
 
 ===============================================================================
-March 5th, 2023: solidfmm-1.4.
+October 29th, 2021: solidfmm-1.0.
 
-- Added assembly implementation for single precision on ARMv8-A.
-- Improved the double precision zm2m and zm2l microkernel methods for ARMv8-A. 
-  On my Raspberry Pi they now deliver 98% of the theoratical peak performance.
-- Added sphere.hpp and sphere.cpp, lets you compute minimal bounding spheres.
-- Expanded benchmark_microkernel to also benchmark the zm2m routine.
-- Fixed typos in the documentation.
-- Code should now compile without warnings when using -Wall -Wextra
-
+Initial Release of solidfmm.

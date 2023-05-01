@@ -139,7 +139,7 @@ Appendix A of this work.}
 
 % Finally, our own commands.
 \newcommand{\solidfmm}{\texttt{solidfmm}}
-\newcommand{\solidfmmversion}{1.4}
+\newcommand{\solidfmmversion}{1.5}
 \newcommand{\PtoM}{\textsc{p2m}}
 \newcommand{\PtoL}{\textsc{p2l}}
 \newcommand{\MtoM}{\textsc{m2m}}
@@ -216,7 +216,7 @@ Appendix A of this work.}
 \title{\solidfmm}
 \subtitle{Version \solidfmmversion}
 \author{Matthias Kirchhart}
-\date{February 2023}
+\date{May 2023}
 
 \uppertitleback
 {%
@@ -284,15 +284,17 @@ alternative licencing options.
 \subsection{System Requirements}
 To compile and install \solidfmm\ you will need a fairly recent version of the
 GNU Compiler Collection (\lstinline|g++|) \emph{or} LLVM (\lstinline|clang++|)
-with support for C++17. 
+with support for C++20. 
 
-Apart from this, on Unix systems you will only need standard development tools,
-i.\,e., a POSIX compatible shell (like \lstinline|bash|), and \lstinline|make|.
-There are  no external library dependencies except for the standard C++ library.
-It should also be possible to compile under Windows using Cygwin or MinGW, but I
-have not tested this. If you downloaded \solidfmm\ from GitHub, you will
-additionally need the GNU Autotools: \lstinline|autoconf|, \lstinline|automake|,
-\lstinline|libtool|, and the software they depend on.
+The only external library dependency is \lstinline|hwloc|\autocite{hwloc},
+which is necessary for the multi\-threading functionality. Apart from this, on
+Unix systems you will only need standard development tools, i.\,e., a POSIX
+compatible shell (like \lstinline|bash|), and \lstinline|make|. It should also
+be possible to compile under Windows using Cygwin or MinGW, but I have not
+tested this. If you downloaded \solidfmm\ by cloning the GitHub repository, you
+will additionally need the GNU Autotools: \lstinline|autoconf|,
+\lstinline|automake|, \lstinline|libtool|, as well as \lstinline|pkg-config|
+and the software they depend on.
 
 The reason for requiring specific compilers is the following. The performance
 critical parts of the code---the so-called microkernels---are written in
@@ -304,10 +306,10 @@ compiler (MSVC) simply does not support inline assembly at all anymore.%
 processors.} \url{https://docs.microsoft.com/en-us/cpp/assembler/inline/%
 inline-assembler?view=msvc-170}} \solidfmm\ uses GCC's syntax, because GCC is
 available for almost all platforms, it is free software, and fairly up-to-date
-with current C++ standards. LLVM also uses the same syntax. Additionally, the
-code uses GCC's feature \lstinline|__builtin_cpu_supports()| to detect the
-availability of AVX and AVX-512 at runtime. This extension is also supported by
-LLVM. 
+with current C++ standards. LLVM also uses the same syntax. Additionally, on
+x86 platforms the code uses GCC's feature \lstinline|__builtin_cpu_supports()|
+to detect the availability of AVX and AVX-512 at runtime. This extension is
+also supported by LLVM. 
 
 
 \subsection{Download Sources}
@@ -337,9 +339,9 @@ on most current GNU/Linux distributions. Here we will only describe how to use
 this software to verify the authenticity of \solidfmm\ on GNU/Linux systems, a
 detailed user guide of \lstinline|gpg| is given on its project website. We will
 only describe the process for the tarball release, which is the recommended
-download option. For the GitHub release we assume that you have sufficient
-familiarity with \lstinline|git| to perform the verification yourself.
-
+download option. For verifying a cloned GitHub repository we assume that you
+have sufficient familiarity with \lstinline|git| to perform the verification
+yourself.
 
 \subsubsection{Setting up GnuPG}
 GnuPG only needs to be set up once. If you have already done so during
@@ -399,25 +401,25 @@ Once you set up GnuPG, verifying the tarball is easy. Simply run the following
 command in the folder into which you downloaded the tarball and the signature
 file. 
 \begin{commandshell*}
-gpg --verify solidfmm-1.4.tar.xz.asc solidfmm-1.4.tar.xz
+gpg --verify solidfmm-1.5.tar.xz.asc solidfmm-1.5.tar.xz
 \end{commandshell*}
 The output should contain a message stating that the signature is correct. If
 so, verification is complete. Otherwise you have downloaded compromised files
-and should abort \emph{immediately}. Replace the version number {1{.}4} with the
+and should abort \emph{immediately}. Replace the version number {1{.}5} with the
 version you downloaded in the above command, if necessary.
 
 \subsection{Unpacking the Tarball}
 Once you have downloaded and (optionally) verified the tarball, it can be
 unpacked as follows.
 \begin{commandshell*}
-tar Jxf solidfmm-1.4.tar.xz
+tar Jxf solidfmm-1.5.tar.xz
 \end{commandshell*}
 For this command to work, you will need \lstinline|tar|\autocite{gnutar} and the
 XZ utils\autocite{xzutils}, which come preinstalled by default on most current
-GNU/Linux systems. This should create a folder named \lstinline|solidfmm-1.4|,
+GNU/Linux systems. This should create a folder named \lstinline|solidfmm-1.5|,
 containing the source code of \solidfmm. Enter this folder by typing
 \begin{commandshell*}
-cd solidfmm-1.4
+cd solidfmm-1.5
 \end{commandshell*}
 
 \subsection{Preparing a Cloned Repository}
@@ -526,41 +528,19 @@ g++ -o yourprogramme.o -c yourprogramme.cpp
 g++ -o yourprogramme -lsolidfmm yourprogramme.o
 \end{commandshell*}
 
-\subsection{Initialisation}\label{sec:quickinit}
-Two kinds of objects are necessary to make use of the library: an 
-\lstinline|operator_handle|, which \emph{should} be shared among different
-threads, and for each thread a \lstinline|buffer_handle|, which \emph{must not}
-be shared among  different threads. To create these objects, you need to know
-the maximum order of multipole expansions that you are going to use. For
-example, if you know that you will never need expansion orders beyond 30, and
-you are working on a system with 8 cores, you would do the following:
-\begin{cppcode*}
-using std::vector;
-using solidfmm::operator_handle;
-using solidfmm::buffer_handle;
-
-// The maximum number of concurrent threads you are going to use.
-const size_t nthreads { 8 };
-
-// Only one such object is necessary; it can and should be shared among threads.
-operator_handle<double> op  { 30 }; 
-                                     
-// Each thread needs its own buffer; it must not be shared.
-vector<buffer_handle<double>> buffers(nthreads,op.make_buffer());
-\end{cppcode*}
-If you want to use single precision numbers, you can replace 
-\lstinline[style=cpp]|double| with \lstinline[style=cpp]|float|. For single
-precision the maximum order is limited by 18, due to the limits of this
-format. For double precision, it is safe to pass numbers larger than 30 to
-\lstinline|operator_handle|'s constructor, however, in this case, it would come
-with the cost of a slightly increased memory footprint.
+Since version 1.5, \solidfmm\ also supports the \lstinline|pkg-config| tool
+to automatically discover the right linkage and preprocessor flags. If you have
+this tools installed on your system, you can use it to query the correct flags:
+\begin{commandshell*}
+pkg-config --libs   solidfmm   # Prints Flags for linking against solidfmm
+pkg-config --cflags solidfmm   # Flags for the C-preprocessor to find headers
+\end{commandshell*}
 
 \subsection{Creating Expansions}
 Suppose we were given $N$ point charges at locations $(x_i,y_i,z_i)^\top
 \in\wholespace$ with associated charges $m_i\in\reals$, $i=0,\dotsc,N-1$. We
 now seek to create a multipole expansion of order $P=\text{15}$ around the point
-$(x_A,y_A,z_A)^\top\in\wholespace$. To do this so-called \textsc{p2m} operation
-in
+$(x_A,y_A,z_A)^\top\in\wholespace$. To do this so-called \PtoM\ operation in
 \solidfmm, one could use the following code.
 \begin{cppcode*}
 using solidfmm::solid;
@@ -586,7 +566,7 @@ the coefficients $M_n^m\in\complex, n=0,\dotsc,P-1,\ m=-n,\dotsc,n$ of the
 multipole expansion.
 
 Although much less common, local expansions can be created directly from the
-given point charges (\textsc{p2l}) in almost the exact same way. All we need to
+given point charges (\PtoL) in almost the exact same way. All we need to
 do is to replace the regular harmonics with the singular ones. Thus, assume we
 wanted to create a local expansion for the same charges around the centre
 $(x_B,y_B,z_B)^\top\in\wholespace$. This can be achieved as follows:
@@ -637,7 +617,7 @@ double xB, yB, zB;  // Given expansion centre, initialised somewhere else.
 double x,  y,  z;   // Given evaluation point, initialised somewhere else.
 
 double result { 0 };
-dot( M, R<double>(P,x-xB,y-yB,z-zB), &result );
+dot( L, R<double>(P,x-xB,y-yB,z-zB), &result );
 \end{cppcode*}
 
 Again, we remark that \solidfmm\ also supports vector-valued expansions and
@@ -645,74 +625,118 @@ refer to \cref{chp:userreference} for this.
 
 \subsection{Translations}\label{sec:quicktranslations}
 We now come to the main reason for the existence of this library: to provide an
-efficient implementation of the translation operators \textsc{m2m},
-\textsc{m2l}, and $\textsc{l2l}$. Assume we were given the following data,
-initialised
-somewhere else:
+efficient implementation of the translation operators \MtoM, \MtoL, and
+\LtoL. In this section we describe how to use the
+\lstinline|multithreaded_scheduler|, as it is most easy to use. If you prefer
+to do the workbalancing and scheduling of threads yourself, you can use
+the single threaded functions as discussed in \cref{sec:singlethreadedtrans}.
+
+In \solidfmm, a translation is described using a \lstinline|translation_info|
+object:
 \begin{cppcode*}
-// Number of translations you want to carry out.
-size_t howmany;
-
-// Arrays of size howmany, containing *pointers* to coefficients.
-solidfmm::solid<double> *input [howmany];   
-solidfmm::solid<double> *output[howmany];  
-
-// Shift vectors for the translations. That is, if the input coefficients
-// represent expansions about a point (xA,yA,zA), and the output coefficients
-// should be around another centre (xB,yB,zB), the shift-vectors would be
-// (xB-xA,yB-yA,zB-zA).
-double xshift[howmany]; 
-double yshift[howmany];
-double zshift[howmany];
-\end{cppcode*}
-
-We also assume that you already have initialised the library, as described
-in \cref{sec:quickinit}. To perform the actual translation, you just need to
-call \textsc{m2l}, or, respectively \textsc{m2m} and \textsc{l2l}, as follows:
-\begin{cppcode*}
-solidfmm::m2l(op,buffers[threadno],howmany,input,output,xshift,yshift,zshift);
-\end{cppcode*}
-Here, \lstinline|threadno| contains the number of the currently running
-thread, such that the operation uses the corresponding buffer. \lstinline|m2m|
-and \lstinline|l2l| are called analogously.
-
-The result of \lstinline|input[i]| is \emph{added} to \lstinline|output[i]|.
-Suppose you have 200 input expansions that you want to accumulate into a single
-output expansion \lstinline|L|. To achieve this, you can just repeat the
-output pointer:
-\begin{cppcode*}
-for ( int i = 0; i < 200; ++i )
-	output[i] = &L;
-
-solidfmm::m2l(op,buffers[threadno],howmany,input,output,xshift,yshift,zshift);
-\end{cppcode*}
-Similarly, input pointers can also be repeated if you want to translate one
-source to many targets. To make maximum use of the vectorisation, always call
-these operations with \lstinline|howmany| as big as possible. That is,
-\emph{do not} call \lstinline|m2l| 200 times with \lstinline|howmany = 1|.
-
-You may call \lstinline|m2m|, \lstinline|l2l|, and \lstinline|m2l|
-simultaneously from several threads. In this case, each thread needs its own
-buffer. You cannot have different threads  write to the same output, this will
-cause a race condition and undefined results.
-
-Note that these operations \emph{support mixed orders}, i.\,e.,
-\lstinline|input[i]| and \lstinline|output[i]| may have different expansion
-orders. Make sure that the output expansions are initialised and have the
-correct order! Default constructed objects of type \lstinline|solid<double>|
-will have order zero, so then nothing happens. If in doubt, before doing the
-translation, you may call:
-\begin{cppcode*}
-for ( size_t i = 0; i < howmany; ++i )
+template <typename real>
+struct translation_info
 {
-    output[i]->resize( P ); // Choose your desired output order here.
-    output[i]->zeros();     // Set all coefficients to zero.
+    const solid<real> *source;  // Source coefficients
+          solid<real> *target;  // Target coefficients
+
+    real x, y, z;               // Shift vector.
+};
+
+extern template class translation_info<float>;
+extern template class translation_info<double>;
+\end{cppcode*}
+
+The result of translating the \lstinline|source| solid is \emph{added} to
+\lstinline|target|, making accumulation possible. So in pseudo-code we have:
+\begin{equation*}
+\texttt{target}\quad\texttt{+=}\quad
+\textrm{translate}(\texttt{source},x,y,z);
+\end{equation*}
+where \enquote{translate} can mean any of \MtoM, \MtoL, or \LtoL. Note that
+\solidfmm\ supports translations of mixed orders, so it is important that you
+initialise the \lstinline|target| to the correct order. Also note that
+vector-valued expansions are also supported. Default-constructed
+objects of type \lstinline|solid| are of order zero and dimension 1; so in this
+case nothing happens. If in doubt, you can explicitly initialise the targets
+using the \lstinline|resize()| member function. For example, you could use the
+following code:
+
+\begin{cppcode*}
+// If in doubt if your targets were already initialised to the desired
+// output order, you can use the following code.
+
+// Large list of translations, initialised somewhere else
+std::vector< translation_info<double> > translations;
+ 
+for ( auto i = translations.begin(); i != translations.end(); ++i )
+{
+	i->target->resize(P); // Choose your desired output order here.
+	i->target->zeros();   // Initialise target to zero.
 }
 \end{cppcode*}
-to set the order of the output expansions to \lstinline|P|.
+
+The easiest way to carry out translations is the
+\lstinline|multithreaded_translator| class. By default, an instance of this
+class will use \emph{all available cores} to carry out as many translations
+in parallel as possible. It takes care of data races, so accumulation will work
+as expected. However, it does not do dependency checking, so a list of
+translations where some \lstinline|solid|s are \emph{both} a source and a
+target will lead to undefined behaviour. In particular, in the usual workflow
+of the fast multipole method, it usually works to pass a list of \emph{all}
+\MtoL\ translations; however \MtoM\ and \LtoL\ translations must be carried out
+level-wise.
+
+\begin{cppcode*}
+// Large list of translations, initialised somewhere else
+std::vector< translation_info<double> > translations;
+
+// Maximum order P that we are going to use, initialised somewhere else.
+size_t P;
+
+// Expensive to create! Only create once at program start-up if possible.
+// Will by default use all available cores on the system and distribute work
+// equally among them.
+multithreaded_translator<double> T( P );
+
+// On systems with different kinds of cores, e.g., performance cores
+// and efficiency cores, it makes sense to measure the throughput and schedule
+// work accordingly. Uncomment the following line for this. Measurement is
+// expensive, it should be done only once at program start-up.
+//T.schedule_by_measuring_throughput();
+
+// Carry out, e.g., m2l translations. m2m and l2l are called analogously.
+T.m2l( translations.data(), translations.data() + translations.size() );
+\end{cppcode*}
+
+By default, the translator class will carry out a check at runtime if the
+list of translations is valid: does no source or target exceed order P? For
+vector-valued coefficients: do the dimensions of sources and targets match?
+If one of these checks fails an exception is thrown and nothing happens
+(strong exception guarantee).
+
+For maximum performance, you can omit these checks. If you pass data that
+violates the above criteria, however, the results will be undefined.
+\begin{cppcode*}
+T.m2l_unchecked(translations.data(),translations.data()+translations.size());
+\end{cppcode*}
+
+Lastly, we would like to point out that it is possible to specify how many
+threads and which cores the \lstinline|multithreaded_translator| should use.
+For this, you need to use \lstinline|hwloc| and the following constructor:
+\begin{cppcode*}
+multithreaded_translator( size_t P, hwloc_topology_t topo,
+                          hwloc_cpuset_t *begin, hwloc_cpuset_t *end );
+\end{cppcode*}
+For each CPU-set that you pass, the \lstinline|multithreaded_translator| creates
+and manages a thread and pins it to that set. How to create such sets is
+described in the \lstinline|hwloc| documentation.
+
+
+
 
 \subsection{Computing Minimal Bounding Spheres}
-Since \solidfmm\ version 1.4 we provide routines for computing minimal bounding
+Since version 1.4, \solidfmm\ provides routines for computing minimal bounding
 spheres. These are useful in adaptive fast multipole codes to avoid being
 overly pessimistic in the multipole acceptance criterion. We provide
 two kinds of routines: one computes the minimal bounding sphere of a set 
@@ -861,7 +885,7 @@ large. In practice, choices up to $P=20$ are common---remember that the kernel
 expansion~\eqref{eqn:kernel-expansion} converges exponentially with $P$. Only
 very few calculations require even higher accuracies. Operation
 \eqref{eqn:multipole-coefficients} computes multipole coefficients $M_n^m$ from
-a given set of planets or particles; it is commonly called \textsc{p2m}:
+a given set of planets or particles; it is commonly called \PtoM:
 particle-to-multipole.
 
 In summary, a multipole expansion approximates the potential $\varphi$ of a
@@ -967,13 +991,13 @@ L_n^m\overline{R_n^m(\vv{x}-\vv{x}_B)}\qquad
 \end{equation}
 
 The operation of computing the local coefficients directly from the particles
-is called particle-to-local (\textsc{p2l}):
+is called particle-to-local (\PtoL):
 \begin{equation}\label{eqn:p2l}
 L_n^m\coloneqq\sum_{i=0}^{N-1}S_n^m(\vv{x}_i-\vv{x}_B)Gm_i.
 \end{equation}
 However, most FMM implementations do not compute local coefficients via
-\textsc{p2l}; those that do only use it in rare circumstances. The usual way to
-obtain local coefficients is the so-called \textsc{m2l} translation and will be
+\PtoL; those that do only use it in rare circumstances. The usual way to
+obtain local coefficients is the so-called \MtoL\ translation and will be
 discussed later.
 
 \subsection{Remarks on the Derivation of Expansions}
@@ -1741,7 +1765,11 @@ throw exceptions of type \lstinline|std::bad_alloc|.
 
 \section{\texttt{solidfmm/handles.hpp}}\label{sec:handles}
 The handle classes encapsulate resources that are implementation details but
-are needed to carry out the translation operations \MtoM, \MtoL, and \LtoL.
+are needed to carry out the single-threaded versions of the translation
+operations \MtoM, \MtoL, and \LtoL. You do not need these if you use the
+\lstinline|multithreaded_translator| as described in
+\cref{sec:quicktranslations}.
+
 There are two kinds of handles:
 \begin{enumerate}
 \item \lstinline|operator_handle|. Only one of these handles is needed, it
@@ -1782,8 +1810,8 @@ public:
 \end{cppcode*}
 
 In other words, a \lstinline|buffer_handle| needs to be created specifically
-for a particular \lstinline|operator_handle|. As discussed in
-\cref{sec:quickinit}, this can for example be achieved as follows:
+for a particular \lstinline|operator_handle|. This can for example be achieved
+as follows:
 \begin{cppcode*}
 // The maximum number of concurrent threads you are going to use.
 // For example, on a CPU with 8 cores:
@@ -1812,8 +1840,78 @@ Passing $P=0$ will case an exception of type \lstinline|std::logic_error| to be
 thrown.
 
 
-\section{\texttt{solidfmm/translations.hpp}}
-This header contains the actual translation operations:
+\section{\texttt{solidfmm/translations.hpp}}\label{sec:singlethreadedtrans}
+This header contains methods for carrying out the translation operations
+\MtoM, \MtoL, and \LtoL. The mathematical background and details of these
+operations are discussed in \cref{chp:mathbackground}. The 
+\lstinline|translation_info| and \lstinline|multithreaded_translator| classes
+were already described in \cref{sec:quicktranslations}. Additionally this
+header contains the single threaded functions. To use these, you will need to
+create handles as described in \cref{sec:handles}.
+
+\subsection{Single-threaded Translation Routines}
+\begin{cppcode*}
+void           m2l( const operator_data<double> &op,
+                          threadlocal_buffer<double> &buf,
+                    const translation_info<double> *begin,
+                    const translation_info<double> *end );
+
+void m2l_unchecked( const operator_data<double> &op, 
+                          threadlocal_buffer<double> &buf,
+                    const translation_info<double> *begin,
+                    const translation_info<double> *end ) noexcept;
+
+// Analogous for m2m, l2l, and single precision (float).
+\end{cppcode*}
+Just like the \lstinline|multithreaded_translator|, these operations also
+support vector-valued \lstinline|solid|s. In this case, the translations are
+carried out component-wise along the specified shift vector. For this to work,
+the target \lstinline|solid|s must match the dimension of the input expansion.
+
+The functions come in two variants. The default variants perform some simple
+runtime checks to ensure that the operations are well-defined. First of all,
+they check if the \lstinline|operator_handle| and \lstinline|buffer_handle| are
+compatible with each other. They then check that none of the coefficients
+exceed the maximum order $P$ of the supplied handles. In the case of
+vector-valued coefficients, they check that dimensions of source and target
+expansions match. If one of these checks fails, an exception is thrown and the
+arguments are left unchanged (strong exception guarantee). In summary, the
+following exceptions can be thrown:
+\begin{itemize}
+\item \lstinline|std::logic_error| If input and output dimensions of the passed
+\lstinline|solid|s differ. This also is thrown if you pass a
+\lstinline|buffer_handle| that was created for a different
+\lstinline|operator_handle|.
+\item \lstinline|std::out_of_range| if the order of one of the passed
+\lstinline|solid|s exceeds the order of the given \lstinline|operator_handle|.
+\end{itemize}
+
+The unchecked variants omit these checks, never throw exceptions
+and lead to \emph{undefined behaviour} when invalid data is supplied.
+
+The types \lstinline|operator_data| and \lstinline|threadlocal_buffer| are the
+implementation details that are encapsulated by the handle classes in
+\cref{sec:handles}. Thus, a user should pass the corresponding handles instead,
+and \emph{never} use the internal classes \lstinline|operator_data| and
+\lstinline|threadlocal_buffer| directly.
+
+Just like the \lstinline|multithreaded_translator| class, these functions
+\emph{add} and accumulate the translation results into the corresponding
+targets:
+\begin{equation*}
+\textrm{target}\quad\texttt{+=}\quad\textrm{translate}(\textrm{source},x,y,z).
+\end{equation*} 
+
+These functions do not create any threads, they operation is carried out by
+the calling thread of execution. You may call \lstinline|m2m|, \lstinline|l2l|,
+and \lstinline|m2l| simultaneously from several threads. In this case, each
+thread needs its own buffer. You cannot have different threads  write to the
+same output, this will cause a race condition and undefined results.
+
+\subsection{Single-threaded Methods using the Classic Interface}
+The classic interface only comes in the \enquote{checked} variant and behaves
+identically to the interface using the \lstinline|translation_info| class
+described in the previous subsection.
 \begin{cppcode*}
 void m2m( const operator_data<double> &op, threadlocal_buffer<double> &buf, 
           size_t howmany, const solid<double> *const *const Min,
@@ -1830,39 +1928,42 @@ void l2l( const operator_data<double> &op, threadlocal_buffer<double> &buf,
           size_t howmany, const solid<double> *const *const Lin,
                                 solid<double> *const *const Lout,
           const double *x, const double *y, const double *z );
+
 \end{cppcode*}
 and the corresponding functions for single precision calculations using
 \lstinline[style=cpp]|float|.
 
-The types \lstinline|operator_data| and \lstinline|threadlocal_buffer| are the
-implementation details that are encapsulated by the handle classes in
+Again, the types \lstinline|operator_data| and \lstinline|threadlocal_buffer|
+are the implementation details that are encapsulated by the handle classes in
 \cref{sec:handles}. Thus, a user should pass the corresponding handles instead,
 and \emph{never} use the internal classes \lstinline|operator_data| and
 \lstinline|threadlocal_buffer| directly.
 
-The mathematical background and details of these operations are discussed in
-\cref{chp:mathbackground}. The usage of these functions is already illustrated
-in \cref{sec:quicktranslations}. In addition to the scenario described there,
-these operations also support vector-valued \lstinline|solid|s. In this case
-the translations are carried out component-wise along the specified shift
-vector. For this to work, the target \lstinline|solid|s must match the
-dimension of the input expansion. In other words, for example for 
-\MtoL\ one must have for all $i=0,\dotsc,\mathtt{howmany}-1$:
-\begin{center}
-\lstinline|M[i]->dimension() == L[i]->dimension()|.
-\end{center}
+Assume we were given the following data, initialised somewhere else:
+\begin{cppcode*}
+// Number of translations you want to carry out.
+size_t howmany;
 
-Again, these functions provide the strong exception guarantee. In case an
-exception is thrown, they leave their arguments unchanged. The following
-exceptions can be thrown:
-\begin{itemize}
-\item \lstinline|std::logic_error| If input and output dimensions of the passed
-\lstinline|solid|s differ. This also is thrown if you pass a
-\lstinline|buffer_handle| that was created for a different
-\lstinline|operator_handle|.
-\item \lstinline|std::out_of_range| if the order of one of the passed
-\lstinline|solid|s exceeds the order of the given \lstinline|operator_handle|.
-\end{itemize}
+// Arrays of size howmany, containing *pointers* to coefficients.
+solidfmm::solid<double> *input [howmany];   
+solidfmm::solid<double> *output[howmany];  
+
+// Shift vectors for the translations. That is, if the input coefficients
+// represent expansions about a point (xA,yA,zA), and the output coefficients
+// should be around another centre (xB,yB,zB), the shift-vectors would be
+// (xB-xA,yB-yA,zB-zA).
+double xshift[howmany]; 
+double yshift[howmany];
+double zshift[howmany];
+\end{cppcode*}
+
+We also assume that you already have created operator and buffer handles
+as described in \cref{sec:handles}. To perform the actual translation, you just
+need to call \MtoL, or, respectively \MtoM\ and \LtoL, as follows:
+\begin{cppcode*}
+solidfmm::m2l(op_handle,buf_handle,howmany,input,output,xshift,yshift,zshift);
+\end{cppcode*}
+
 
 \part{Developer Guide}\label{part:developer}
 
@@ -2626,40 +2727,49 @@ at or the other optimised implementations for an inspiration.
 
 \subsection{Modifying the Build System}
 Once you have finished writing your code, you need to inform the build system
-about its existence. For this you need to edit the file
-\lstinline|solidfmm/makefile.am|. Look for the line starting with
-\lstinline|noinst_HEADERS| and add the header \lstinline|microkernel_aicpu.hpp|
-to the list. Next, add the \lstinline|microkernel_aicpu.cpp| to the line
-beginning with\\ \lstinline|libsolidfmm_la_SOURCES|. Lastly, you should increase
-the first and last digits of the \enquote{version-info} in the last line of the
-\lstinline|makefile.am|. The result should look similar to the following.
+about its existence. For this you need to edit the file \lstinline|Makefile.am|.
+Look for the line starting with \lstinline|noinst_HEADERS| and add the header
+\lstinline|solidfmm/microkernel_aicpu.hpp| to the list. Next, add the file
+\lstinline|solidfmm/microkernel_aicpu.cpp| to the line beginning with
+\lstinline|libsolidfmm_la_SOURCES|. Lastly, you should increase the first and
+last digits of the \enquote{version-info} of the library. The result should look
+similar to the following.
 \begin{commandshell*}
-# Do not touch the following two lines.
-lib_LTLIBRARIES = libsolidfmm.la
-pkginclude_HEADERS = solid.hpp harmonics.hpp translations.hpp handles.hpp
+# Do not touch these lines.
+ACLOCAL_AMFLAGS = -I m4
+EXTRA_DIST = doc/README doc/solidfmm.tex doc/literature.bib doc/solidfmm.pdf   \
+             m4/ax_cxx_compile_stdcxx.m4 m4/ax_pthread.m4 m4/pkg.m4            \
+             kirchhart_pubkey.gpg solidfmm.pc.in
 
+pkgconfig_DATA = solidfmm.pc
 
-# You can continue a line on the next with a trailing backslash
-# Add the header of your microkernel here.
-noinst_HEADERS = random.hpp stopwatch.hpp swap_matrix.hpp microkernel.hpp \
-                 microkernel_avx.hpp microkernel_avx512f.hpp              \
-                 microkernel_armv8a.hpp microkernel_generic.hpp           \
-                 microkernel_test.hpp                                     \
-                 operator_data.hpp threadlocal_buffer.hpp                 \
-                 microkernel_aicpu.hpp
+lib_LTLIBRARIES = solidfmm/libsolidfmm.la
 
-# Add the source of your microkernel here.
-libsolidfmm_la_SOURCES = solid.cpp harmonics.cpp handles.cpp             \
-                         swap_matrix.cpp operator_data.cpp               \
-                         threadlocal_buffer.cpp                          \
-                         microkernel.cpp microkernel_avx.cpp             \
-                         microkernel_avx512f.cpp microkernel_armv8a.cpp  \
-                         microkernel_generic.cpp microkernel_test.cpp    \
-                         translations.cpp microkernel_aicpu.cpp
-                      
-# Increase the first and last digit of the version info by one, for example,
-# from 1:0:1 to 2:0:2
-libsolidfmm_la_LDFLAGS = -version-info 2:0:2
+pkginclude_HEADERS = solidfmm/solid.hpp solidfmm/harmonics.hpp                 \
+    solidfmm/translations.hpp solidfmm/handles.hpp solidfmm/sphere.hpp         \
+
+# Add your header here
+noinst_HEADERS = solidfmm/random.hpp solidfmm/stopwatch.hpp                    \
+    solidfmm/swap_matrix.hpp solidfmm/microkernel.hpp                          \
+    solidfmm/microkernel_avx.hpp solidfmm/microkernel_avx512f.hpp              \
+    solidfmm/microkernel_generic.hpp solidfmm/microkernel_test.hpp             \
+    solidfmm/microkernel_armv8a.hpp solidfmm/operator_data.hpp                 \
+    solidfmm/threadlocal_buffer.hpp solidfmm/microkernel_aicpu.hpp
+
+# Add your implementation file here
+solidfmm_libsolidfmm_la_SOURCES = solidfmm/solid.cpp solidfmm/harmonics.cpp    \
+    solidfmm/handles.cpp solidfmm/sphere.cpp  solidfmm/swap_matrix.cpp         \
+    solidfmm/operator_data.cpp solidfmm/threadlocal_buffer.cpp                 \
+    solidfmm/microkernel.cpp solidfmm/microkernel_avx.cpp                      \
+    solidfmm/microkernel_avx512f.cpp solidfmm/microkernel_generic.cpp          \
+    solidfmm/microkernel_armv8a.cpp solidfmm/microkernel_test.cpp              \
+    solidfmm/translations.cpp solidfmm/multithreaded_translator.cpp            \
+    solidfmm/microkernel_aicpu.cpp
+
+# Increase version, e.g., from 4:0:4 to 5:0:5
+solidfmm_libsolidfmm_la_LDFLAGS = -version-info 5:0:5
+
+# No need to modify the file below here.
 \end{commandshell*}
 
 More information about the version info can be found in the \lstinline|libtool|

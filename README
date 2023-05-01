@@ -29,7 +29,8 @@ LIST OF FEATURES:
     - Supports mixed order translations: you can do M2M, M2L, L2L with
       differing input and output orders P. This is important for adaptive fast
       multipole codes.
-    - No dependence on external libraries except for the C++ standard library.
+    - Only one library dependency: hwloc, used for handling thread affinity
+      and core discovery in a platform independent way. 
     - Thread safe. In fact, solidfmm is specifically designed to be used in a
       multithreaded environment.
     - Exception safe. All routines either provide the nothrow or the strong
@@ -43,7 +44,7 @@ LIST OF FEATURES:
       use solidfmm. It does not pollute the global namespace either.
 
 The assembly implementations assume that either GCC's (GNU Compiler Collection)
-or LLVM's (clang) C++ compiler is used. 
+or LLVM's (clang) C++ compiler is used. Intel's icpx works as well.
 
 NOTE: **** A detailed user guide can be found in the doc folder. ****
 
@@ -71,11 +72,11 @@ as a four-fold nested loop, which is quite inefficient.
 solidfmm aims to change this situation. It provides highly optimised
 implementations of these operators and uses the accelerated, rotation-based
 O(P³) implementation. For x86 CPUs supporting the AVX or AVX-512F instruction
-sets it provides maximally tuned implementations, which are partially hand-coded 
-in assembly language for maximum performance. Optimised routines are also
-provided for ARMv8-A CPUs in double precision arithmetic. For all other
-architectures we provide a generic implementation, which is, however, slower.
-If you are interested in the gritty details of the implementation, we refer to
+sets, as well as for ARMv8-A CPUs supporting the ASIMD (NEON) instructions, it 
+provides maximally tuned implementations, which are partially hand-coded in
+assembly language for maximum performance. For all other architectures we
+provide a generic implementation, which is, however, slower. If you are
+interested in the gritty details of the implementation, we refer to
 the future documentation and the paper, which are currently in preparation.
 A descrpition on how to develop your own optimised routines is given in
 Chapter 4 of the documentation.

@@ -64,6 +64,7 @@ threadlocal_buffer<real>::threadlocal_buffer() noexcept:
 P { 0 }, rows { 0 }, cols { 0 }, alignment { 0 }, bufsize { 0 },
 buf            { nullptr },
 ptr_buf        { nullptr },
+Pbuf           { nullptr },
 r              { nullptr }, rinv           { nullptr },
 cos_alpha      { nullptr }, sin_alpha      { nullptr },
 cos_beta       { nullptr }, sin_beta       { nullptr },

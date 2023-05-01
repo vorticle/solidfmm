@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021, 2022 Matthias Kirchhart
+ * Copyright (C) 2021, 2022, 2023 Matthias Kirchhart
  *
  * This file is part of solidfmm, a C++ library of operations on the solid
  * harmonics for use in fast multipole methods.
@@ -363,7 +363,6 @@ swap( const float *mat, const float *in,
         "                                        \n\t"
         "vmovaps   64(%[in]), %%ymm12            \n\t" // Odd iteration.
         "vmovaps   96(%[in]), %%ymm13            \n\t"
-        "addq    $128,%[in]                      \n\t"
         "                                        \n\t"
         "vbroadcastss 12(%[mat]),%%ymm14         \n\t"
         "vbroadcastss 16(%[mat]),%%ymm15         \n\t"
@@ -373,10 +372,11 @@ swap( const float *mat, const float *in,
         "vfmadd231ps  %%ymm13,%%ymm15,%%ymm7     \n\t"
         "                                        \n\t"
         "vbroadcastss 20(%[mat]),%%ymm14         \n\t"
-        "addq         $24,%[mat]                 \n\t"
         "vfmadd231ps  %%ymm12,%%ymm14,%%ymm10    \n\t"
         "vfmadd231ps  %%ymm13,%%ymm14,%%ymm11    \n\t"
         "                                        \n\t"
+        "addq    $128,%[in]                      \n\t"
+        "addq     $24,%[mat]                     \n\t"
         "decq         %[k]                       \n\t"
         "jnz          .Lloop%=                   \n\t"
         "                                        \n\t"
@@ -478,7 +478,6 @@ zm2l( const float* fac, const float* in,
         "                                        \n\t" // {
         "vmovaps          (%[in]), %%ymm12       \n\t" // b0   = _mm256_load_pd(in+0);
         "vmovaps        32(%[in]), %%ymm13       \n\t" // b1   = _mm256_load_pd(in+8);
-        "addq          $64,%[in]                 \n\t" // in   = in + 16;
         "                                        \n\t"
         "vbroadcastss    (%[fac]), %%ymm14       \n\t" // tmp0 = _mm256_broadcast_ss(fac+0); 
         "vbroadcastss   4(%[fac]), %%ymm15       \n\t" // tmp1 = _mm256_broadcast_ss(fac+1);
@@ -501,6 +500,7 @@ zm2l( const float* fac, const float* in,
         "vfmadd231ps   %%ymm12, %%ymm15, %%ymm10 \n\t" // c50  = _mm256_fmadd_ps(b0,tmp1,c50)
         "vfmadd231ps   %%ymm13, %%ymm15, %%ymm11 \n\t" // c51  = _mm256_fmadd_ps(b1,tmp1,c51)
         "                                        \n\t"
+        "addq          $64,%[in]                 \n\t" // in   = in + 16;
         "addq          $4, %[fac]                \n\t" // fac = fac + 1;
         "decq          %[k]                      \n\t" // k--;
         "jnz           .Lloop%=                  \n\t" // } while (k);
@@ -583,7 +583,6 @@ zm2m( const float* fac, const float* in,
         "                                        \n\t" // {
         "vmovaps          (%[in]), %%ymm12       \n\t" // b0   = _mm256_load_ps(in+0);
         "vmovaps        32(%[in]), %%ymm13       \n\t" // b1   = _mm256_load_ps(in+8);
-        "addq          $64,%[in]                 \n\t" // in   = in + 16;
         "                                        \n\t"
         "vbroadcastss    (%[fac]), %%ymm14       \n\t" // tmp0 = _mm256_broadcast_ss(fac+0); 
         "vbroadcastss   4(%[fac]), %%ymm15       \n\t" // tmp1 = _mm256_broadcast_ss(fac+1);
@@ -606,6 +605,7 @@ zm2m( const float* fac, const float* in,
         "vfmadd231ps   %%ymm12, %%ymm15, %%ymm10 \n\t" // c00  = _mm256_fmadd_ps(b0,tmp1,c00)
         "vfmadd231ps   %%ymm13, %%ymm15, %%ymm11 \n\t" // c01  = _mm256_fmadd_ps(b1,tmp1,c01)
         "                                        \n\t"
+        "addq          $64,%[in]                 \n\t" // in  = in + 16;
         "addq          $4, %[fac]                \n\t" // fac = fac + 1;
         "decq          %[k]                      \n\t" // --k;
         "jnz           .Lloop%=                  \n\t" // } while (k);
@@ -1094,7 +1094,6 @@ swap( const double *mat, const double *in,
         "                                        \n\t"
         "vmovapd   64(%[in]), %%ymm12            \n\t" // Odd iteration.
         "vmovapd   96(%[in]), %%ymm13            \n\t"
-        "addq    $128,%[in]                      \n\t"
         "                                        \n\t"
         "vbroadcastsd 24(%[mat]),%%ymm14         \n\t"
         "vbroadcastsd 32(%[mat]),%%ymm15         \n\t"
@@ -1104,10 +1103,11 @@ swap( const double *mat, const double *in,
         "vfmadd231pd  %%ymm13,%%ymm15,%%ymm7     \n\t"
         "                                        \n\t"
         "vbroadcastsd 40(%[mat]),%%ymm14         \n\t"
-        "addq         $48,%[mat]                 \n\t"
         "vfmadd231pd  %%ymm12,%%ymm14,%%ymm10    \n\t"
         "vfmadd231pd  %%ymm13,%%ymm14,%%ymm11    \n\t"
         "                                        \n\t"
+        "addq    $128,%[in]                      \n\t"
+        "addq     $48,%[mat]                     \n\t"
         "decq         %[k]                       \n\t"
         "jnz          .Lloop%=                   \n\t"
         "                                        \n\t"
@@ -1209,7 +1209,6 @@ zm2l( const double* fac, const double* in,
         "                                        \n\t" // {
         "vmovapd          (%[in]), %%ymm12       \n\t" // b0   = _mm256_load_pd(in+0);
         "vmovapd        32(%[in]), %%ymm13       \n\t" // b1   = _mm256_load_pd(in+4);
-        "addq          $64,%[in]                 \n\t" // in   = in + 8;
         "                                        \n\t"
         "vbroadcastsd    (%[fac]), %%ymm14       \n\t" // tmp0 = _mm256_broadcast_sd(fac+0); 
         "vbroadcastsd   8(%[fac]), %%ymm15       \n\t" // tmp1 = _mm256_broadcast_sd(fac+1);
@@ -1232,6 +1231,7 @@ zm2l( const double* fac, const double* in,
         "vfmadd231pd   %%ymm12, %%ymm15, %%ymm10 \n\t" // c50  = _mm256_fmadd_pd(b0,tmp1,c50)
         "vfmadd231pd   %%ymm13, %%ymm15, %%ymm11 \n\t" // c51  = _mm256_fmadd_pd(b1,tmp1,c51)
         "                                        \n\t"
+        "addq          $64,%[in]                 \n\t" // in   = in + 8;
         "addq          $8, %[fac]                \n\t" // fac = fac + 1;
         "decq          %[k]                      \n\t" // --k;
         "jnz           .Lloop%=                  \n\t" // } while (k);
@@ -1314,7 +1314,6 @@ zm2m( const double* fac, const double* in,
         "                                        \n\t" // {
         "vmovapd          (%[in]), %%ymm12       \n\t" // b0   = _mm256_load_pd(in+0);
         "vmovapd        32(%[in]), %%ymm13       \n\t" // b1   = _mm256_load_pd(in+4);
-        "addq          $64,%[in]                 \n\t" // in   = in + 8;
         "                                        \n\t"
         "vbroadcastsd    (%[fac]), %%ymm14       \n\t" // tmp0 = _mm256_broadcast_sd(fac+0); 
         "vbroadcastsd   8(%[fac]), %%ymm15       \n\t" // tmp1 = _mm256_broadcast_sd(fac+1);
@@ -1337,6 +1336,7 @@ zm2m( const double* fac, const double* in,
         "vfmadd231pd   %%ymm12, %%ymm15, %%ymm10 \n\t" // c00  = _mm256_fmadd_pd(b0,tmp1,c00)
         "vfmadd231pd   %%ymm13, %%ymm15, %%ymm11 \n\t" // c01  = _mm256_fmadd_pd(b1,tmp1,c01)
         "                                        \n\t"
+        "addq          $64,%[in]                 \n\t" // in   = in + 8;
         "addq          $8, %[fac]                \n\t" // fac = fac + 1;
         "decq          %[k]                      \n\t" // --k;
         "jnz           .Lloop%=                  \n\t" // } while (k);
